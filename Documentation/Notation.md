@@ -41,6 +41,13 @@
 - opcode
 - Subtype (ST). a bit which specifies the subformat uses by an instruction.
 - Load Store (LS)
+- Effective Address (EA)
+- (RA) is a field in the instruction
+- err. Short for "Error", all signals starting with `err_` are in the design to
+  help debugging
+- dbg. Short for "Debug", all signals starting with `dbg_` are in the design to
+  help with debugging
+- addr. Short for "Address"
 
 # Notation
 I am using the same notation at the PowerISA.
