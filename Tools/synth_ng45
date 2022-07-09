@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+# This script takes a verilog or systemVerilog source file and synthetize it
+# for NanGate 45
+
+# Check the arguments
+if ! [[ $# -eq 1 ]] 
+then
+    echo "Usage: synth_ng45 <verilog or systemVerilog top file>"
+    exit 1
+fi
+
+# Check the environment variable
+if [ -d $NANGATE45 ]
+then
+    echo "Using nangate45 library from \$NANGATE45 : $NANGATE45"
+else
+    echo "Error: Please add nangate45 to you environment variable \$NANGATE45"
+    echo "Example: export NANGATE45=\"~/OpenROAD-flow-scripts/flow/platforms/nangate45/\""
+    echo "You can find OpenROAD-flow-scripts on github"
+    exit 1
+fi
+
+# Get the module's name from the path and convert systemVerilog to verilog if
+# needed
+HDL_FULLPATH=`realpath $1`
+TOP_MODULE=`basename ${HDL_FULLPATH%%.*}` # remove the extension and the path
+echo "Top level name is expected to be: $TOP_MODULE"
+if [[ $1 == *.sv ]]
+then
+    echo "Translating SystemVerilog to verilog"
+    sv2v --define=SYNTHESIS $HDL_FULLPATH > ${HDL_FULLPATH}.v
+    HDL_FULLPATH="${HDL_FULLPATH}.v"
+fi
+
+# Generate the synthesis output filename
+SYNTH_OUTPUT="${HDL_FULLPATH}.synth.v"
+
+# Synthesis and Static Timing Analysis
+SCRIPT_DIR=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+cd $SCRIPT_DIR
+SYNTH_OUTPUT="$SYNTH_OUTPUT" TOPLEVEL="$TOP_MODULE" VLOG_FILE_NAME=$HDL_FULLPATH yosys yosys_ng45.tcl
+# OpenSTA
+SYNTH_OUTPUT="$SYNTH_OUTPUT" TOPLEVEL="$TOP_MODULE" VLOG_FILE_NAME=$HDL_FULLPATH sta sta_ng45.tcl
+
+# Cleaning
+if [[ $1 == *.sv ]]
+then
+    echo "Deleting generated ${HDL_FULLPATH}"
+    rm ${HDL_FULLPATH}
+fi
+rm -f $SYNTH_OUTPUT

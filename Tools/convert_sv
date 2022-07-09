@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+
+# Uses sv2v to convert system verilog to verilog
+# Optional: include ../rtl/vendor.sv
+# Optional: -I../vendor_lib/rtl/
+sv2v --define=SYNTHESIS $1 > $2
