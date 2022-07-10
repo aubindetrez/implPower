@@ -41,7 +41,8 @@
 - opcode
 - Subtype (ST). a bit which specifies the subformat uses by an instruction.
 - Load Store (LS)
-- Effective Address (EA)
+- Effective Address (EA), the address used to access storage (for data or
+  instructions)
 - (RA) is a field in the instruction
 - err. Short for "Error", all signals starting with `err_` are in the design to
   help debugging
@@ -55,6 +56,9 @@
 - Instruction Fetch Stage (IF)
 - len. short for lenght
 - en. short for enable
+- Target Address Register (TAR)
+- cond. short for conditional
+- Work In Progress (WIP)
 
 # Notation
 I am using the same notation at the PowerISA.

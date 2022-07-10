@@ -1,6 +1,8 @@
 # Branch Facility
 Branch Facility is described in the Power ISA v3.1, (Chapter 2, page 33).
 
+Section 2.4 and (1.10.3) describes 5 cases of effective address calculation.
+
 - If Branch Instruction -> execute the branch target address
 - If Trap Instruction -> test the trap condition and call a handler
 - If System Call -> call a handler

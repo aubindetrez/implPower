@@ -16,6 +16,19 @@ module BranchFacility (
     input logic [63:0] i_count_register  // Section 2.3.3
 );
   // TODO decode what kind of branch is it
+  // - Branch with I/B-form instruction + AA (is it an offset?)
+  // - Branch with XL-form + is it LR or CTR
+
+  // Section 2.4 describe 5 operations
+  // - Add a displacement to the branch address (branch or branch cond. AA=0)
+  // - Use an absolute address (branch or branch cond. AA=1)
+  // - Use the Link Register (branch cond. to LR)
+  // - Use the Count Register (branch cond. to CTR)
+  // - Use the Target Address Register (branch cond. to TAR)
+
+  // TODO execute: compute the effective address (Next Instruction Address)
   // TODO update next_instr_addr accordingly
+  // if LK=1 then save branch's address+4 in the Link Register (LR)
+  // Evaluate branch condition (BO field) see section 2.4
 
 endmodule
