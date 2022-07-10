@@ -18,6 +18,25 @@ do echo ">>> Running Linter on $file"
     fi
 done
 
+# Run formatter on all SystemVerilog files to ensure a consistence reading
+# experience to all contributors
+if ! command -v verible-verilog-format &> /dev/null
+then
+    echo "Error: verible-verilog-format is not installed on your system"
+    echo "You can get it from: https://github.com/chipsalliance/verible"
+    echo "Make sure it is in your PATH before trying again"
+    exit 1
+fi
+for file in `find ./Logic/ -name "*.sv"`
+do echo ">>> Running formatter on $file"
+    verible-verilog-format --inplace $file
+    if [[ $? -ne 0 ]]
+    then echo "==> Error while formatting, please fix it and try again"
+        exit 1
+    fi
+done
+
+
 # Run all Functional tests by calling "make" in every directories in FuncVerif/
 for dir in FuncVerif/*
 do echo ">>> Running Functional tests for $dir"
