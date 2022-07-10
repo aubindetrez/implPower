@@ -48,6 +48,13 @@
 - dbg. Short for "Debug", all signals starting with `dbg_` are in the design to
   help with debugging
 - addr. Short for "Address"
+- System Call (SC)
+- System Call Vectored (SCV)
+- Program Counter (PC) - refers to the same thing as Current Instruction
+  Address (CIA)
+- Instruction Fetch Stage (IF)
+- len. short for lenght
+- en. short for enable
 
 # Notation
 I am using the same notation at the PowerISA.
