@@ -1,6 +1,22 @@
 gitroot="`git rev-parse --show-toplevel`"
 cd $gitroot
 
+if ! command -v python3 &> /dev/null
+then
+    echo "Error: You do not have Python installed"
+    exit 1
+fi
+all_py_files=`find . -name "*.py"`
+for file in $all_py_files
+do
+    echo ">>> Checking Python syntax on $file"
+    python3 -c "import ast; ast.parse(open(\"$file\").read())"
+    if [[ $? -ne 0 ]]
+    then echo "==> Error in you python file $file, fix it and try again."
+        exit 1
+    fi
+done
+
 # Run formatter on all SystemVerilog files to ensure a consistence reading
 # experience to all contributors
 if ! command -v verible-verilog-format &> /dev/null
