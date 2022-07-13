@@ -59,6 +59,11 @@
 - Target Address Register (TAR)
 - cond. short for conditional
 - Work In Progress (WIP)
+- Little Endian (LE)
+- Big Endian (BE)
+- Field Programmable Gate Array (FPGA)
+- GDSII a file containing the physical design of a chip see OpenLane for more
+  information
 
 # Notation
 I am using the same notation at the PowerISA.
