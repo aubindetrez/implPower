@@ -40,8 +40,14 @@ done
 for dir in FuncVerif/*
 do echo ">>> Running Functional tests for $dir"
     cd $dir
-    make
-    # TODO FIXME Stop if the test fails (we do not want to miss it)
-    make clean_all
+    ./test.sh
+    if ! [ $? -eq 0 ]
+    then
+        echo ">>> Verification failed while testing $dir"
+        echo ">>> Please fix it and try again"
+        echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+        exit 1
+    fi
+    ./clean.sh
     cd $gitroot
 done

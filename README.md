@@ -73,6 +73,9 @@ for you: (May be outdated, I don't plan to maintaining this list)
 
 How to contribute:
 - Create a directory and write a testbench in [FuncVerif/](FuncVerif/)
+Just create a `test.sh` script which runs your checks and returns `0` on a success.
+Also write a `clean.sh` to clean all your products. I recommand to use cocotb,
+verilator, iverilog or yosys but it you want to use some other tool you can.
 - Write your design in [Logic/](Logic/)
 - Optional: You can use formal verification (using yosys)
 - Optional: You can also use simple SystemVerilog testbenches (cf [Tools/simu](Tools/simu) )
