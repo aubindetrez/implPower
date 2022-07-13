@@ -91,3 +91,4 @@ Here are some verilog coding guidelines: [Documentation/Coding_guidelines.md](Do
 - A2I POWER: Power ISA v.2.06 compliant core: https://github.com/openpower-cores/a2i
 - A2O POWER: Power ISA v.2.07 compliant core: https://github.com/openpower-cores/a2o
 - Microwatt: Power ISA v.3.0 compliant core: https://github.com/antonblanchard/microwatt
+- Chiselwatt: https://github.com/antonblanchard/chiselwatt
