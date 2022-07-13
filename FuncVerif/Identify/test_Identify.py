@@ -70,9 +70,9 @@ async def test_python_env(dut):
     Unit test for the python verif environment itself (no dut testing)
     """
     # Checking branch_i_form_to_string gives the expect result
-    assert branch_i_form_to_string(PO=0x18, LI=0xcafe, AA=1, LK=1) == "11011111110101001100000000000110"
-    assert branch_b_form_to_string(PO=0x16, BO=18, BI=27, BD=0xafe, AA=1, LK=0) == "01011111110101001101101001011010"
-    assert branch_xl_form_to_string(PO=0x19, S1=7, S2=4, S3=10, XO=0x16, S4=1) == "10110100000010100010011100100110"
+    assert branch_i_form_to_string(PO=18, LI=0xcafe, AA=1, LK=1) == "11011111110101001100000000010010"
+    assert branch_b_form_to_string(PO=16, BO=18, BI=27, BD=0xafe, AA=1, LK=0) == "01011111110101001101101001000010"
+    assert branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=0x16, S4=1) == "10110100000010100010011100110010"
 
 async def init_sequence(dut):
     clock = Clock(dut.i_clk, 1, units="ns") # 1ns clock period
@@ -106,7 +106,7 @@ async def test_identify_prefixed(dut):
 async def test_identify_branch(dut):
     await init_sequence(dut)
     # Power ISA Section 2.4
-    dut.i_instr = int(branch_i_form_to_string(PO=0x18, LI=0xcafe, AA=1, LK=1), 2)
+    dut.i_instr = int(branch_i_form_to_string(PO=18, LI=0xcafe, AA=1, LK=1), 2)
     await RisingEdge(dut.i_clk)
     assert dut.dbg_is_branch_i_form.value == 1, "This is an I form branch"
     assert dut.dbg_is_branch_b_form.value == 0, "This isn't a B form branch but an I form branch"
@@ -114,7 +114,7 @@ async def test_identify_branch(dut):
     assert dut.dbp_is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
     assert dut.dbp_is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
 
-    dut.i_instr = int(branch_b_form_to_string(PO=0x16, BO=18, BI=27, BD=0xafe, AA=1, LK=0), 2)
+    dut.i_instr = int(branch_b_form_to_string(PO=16, BO=18, BI=27, BD=0xafe, AA=1, LK=0), 2)
     await RisingEdge(dut.i_clk)
     assert dut.dbg_is_branch_i_form.value == 0, "This is not an I form branch but a B form branch"
     assert dut.dbg_is_branch_b_form.value == 1, "This is a B form branch"
@@ -122,13 +122,29 @@ async def test_identify_branch(dut):
     assert dut.dbp_is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
     assert dut.dbp_is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
 
-    dut.i_instr = int(branch_xl_form_to_string(PO=0x19, S1=7, S2=4, S3=10, XO=0x16, S4=1), 2)
+    dut.i_instr = int(branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=16, S4=1), 2)
     await RisingEdge(dut.i_clk)
     assert dut.dbg_is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
     assert dut.dbg_is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
     assert dut.dbp_is_branch_cond_to_LR.value == 1, "This is a conditional branch to LR"
     assert dut.dbp_is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
     assert dut.dbp_is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+
+    dut.i_instr = int(branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=528, S4=1), 2)
+    await RisingEdge(dut.i_clk)
+    assert dut.dbg_is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.dbg_is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.dbp_is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.dbp_is_branch_cond_to_CTR.value == 1, "This is a conditional branch to CTR"
+    assert dut.dbp_is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+
+    dut.i_instr = int(branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=560, S4=1), 2)
+    await RisingEdge(dut.i_clk)
+    assert dut.dbg_is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.dbg_is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.dbp_is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.dbp_is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.dbp_is_branch_cond_to_TAR.value == 1, "This is a conditional branch to TAR"
 
 # TODO Test this: (Section 1.10.2 - Big-Endian example)
 # address 00 -> 00 01 02 03 cmplwi r5, 0

@@ -35,22 +35,20 @@ module Identify (
   logic is_branch_cond_to_LR;  // Conditional branch to Link Register, Section 2.4
   logic is_branch_cond_to_CTR;  // Conditional branch to Count Register, Section 2.4
   logic is_branch_cond_to_TAR;  // Conditional branch to Target Address Register, Section 2.4
-  assign is_branch_i_form = (primary_opcode == 6'b000110) ? 1'b1 : 1'b0;
+  assign is_branch_i_form = (primary_opcode == 6'b010010) ? 1'b1 : 1'b0;
   assign dbg_is_branch_i_form = is_branch_i_form;
-  assign is_branch_b_form = (primary_opcode == 6'b011010) ? 1'b1 : 1'b0;
+  assign is_branch_b_form = (primary_opcode == 6'b000010) ? 1'b1 : 1'b0;
   assign dbg_is_branch_b_form = is_branch_b_form;
-  assign is_branch_xl_form = (primary_opcode == 6'b100110) ? 1'b1 : 1'b0;
-  // According to Section 2.4, bits [21, 31] = 0x16 -> 0001_0110
+  assign is_branch_xl_form = (primary_opcode == 6'b110010) ? 1'b1 : 1'b0;
+  // According to Section 2.4, bits [21, 31] = 16 = 0x10 = 0b00_0001_0000
   assign is_branch_cond_to_LR = (is_branch_xl_form == 1'b1
-                                    && i_instr[30:21] == 10'b0110100000)? 1'b1: 1'b0;
-  // According to Section 2.4, bits [21, 31] = 0x528 -> 0101_0010_1000
-  // radare2: 2104804e bctrl
-  // 0018297c       cmpd r9, r3
-  // 2000804e       blr
+                                    && i_instr[30:21] == 10'b0000100000)? 1'b1: 1'b0;
+  // According to Section 2.4, bits [21, 31] = 528 = 0x210 = 0b10_0001_0000
   assign is_branch_cond_to_CTR = (is_branch_xl_form == 1'b1
-                                    && i_instr[30:21] == 10'b0101001010)? 1'b1: 1'b0;
+                                    && i_instr[30:21] == 10'b0000100001)? 1'b1: 1'b0;
+  // According to Section 2.4, bits [21, 31] = 560 = 0x230 = 0b10_0011_0000
   assign is_branch_cond_to_TAR = (is_branch_xl_form == 1'b1
-                                    && i_instr[30:21] == 10'b0001101010)? 1'b1: 1'b0;
+                                    && i_instr[30:21] == 10'b0000110001)? 1'b1: 1'b0;
   assign dbp_is_branch_cond_to_LR = is_branch_cond_to_LR;
   assign dbp_is_branch_cond_to_CTR = is_branch_cond_to_CTR;
   assign dbp_is_branch_cond_to_TAR = is_branch_cond_to_TAR;
