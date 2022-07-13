@@ -11,7 +11,14 @@ module Identify (
     input logic i_clk,
     input logic i_rst,
     input logic i_en,
-    input logic [63:0] i_instr
+    input logic [63:0] i_instr,
+    output logic [31:0] o_bu_instr,  // output instruction to the branch unit
+    output logic o_bu_en,  // Enable branch unit
+    output logic o_bu_i_form,  // if o_bu_en is set, indication the BU what form is the instr.
+    output logic o_bu_b_form,  // if o_bu_en is set, indication the BU what form is the instr.
+    output logic o_bu_cond_LR,  // if o_bu_en is set, indication the BU what form is the instr.
+    output logic o_bu_cond_CTR,  // if o_bu_en is set, indication the BU what form is the instr.
+    output logic o_bu_cond_TAR  // if o_bu_en is set, indication the BU what form is the instr.
 );
   logic is_prefixed;
   logic [5:0] primary_opcode;
@@ -40,6 +47,14 @@ module Identify (
   // According to Section 2.4, bits [21, 31] = 560 = 0x230 = 0b10_0011_0000
   assign is_branch_cond_to_TAR = (is_branch_xl_form == 1'b1
                                     && i_instr[30:21] == 10'b0000110001)? 1'b1: 1'b0;
+  assign o_bu_en = is_branch_i_form | is_branch_b_form | is_branch_cond_to_LR
+                            | is_branch_cond_to_CTR | is_branch_cond_to_TAR;
+  assign o_bu_i_form = is_branch_i_form;
+  assign o_bu_b_form = is_branch_b_form;
+  assign o_bu_cond_LR = is_branch_cond_to_LR;
+  assign o_bu_cond_CTR = is_branch_cond_to_CTR;
+  assign o_bu_cond_TAR = is_branch_cond_to_TAR;
+  assign o_bu_instr = i_instr[31:0];
 
   // TODO continue with identifying other instructions
 endmodule

@@ -43,40 +43,46 @@ async def test_identify_branch(dut):
     # Power ISA Section 2.4
     dut.i_instr = int(utils.branch_i_form_to_string(PO=18, LI=0xcafe, AA=1, LK=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.is_branch_i_form.value == 1, "This is an I form branch"
-    assert dut.is_branch_b_form.value == 0, "This isn't a B form branch but an I form branch"
-    assert dut.is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_bu_instr.value.binstr == '11011111110101001100000000010010', "Instruction do not match"
+    assert dut.o_bu_en.value == 1, "That instruction must be decoded by the BranchUnit"
+    assert dut.o_bu_i_form.value == 1, "This is an I form branch"
+    assert dut.o_bu_b_form.value == 0, "This isn't a B form branch but an I form branch"
+    assert dut.o_bu_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_bu_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_bu_cond_TAR.value == 0, "This is not a conditional branch to TAR"
 
     dut.i_instr = int(utils.branch_b_form_to_string(PO=16, BO=18, BI=27, BD=0xafe, AA=1, LK=0), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.is_branch_i_form.value == 0, "This is not an I form branch but a B form branch"
-    assert dut.is_branch_b_form.value == 1, "This is a B form branch"
-    assert dut.is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_bu_instr.value.binstr == '01011111110101001101101001000010', "Instruction do not match"
+    assert dut.o_bu_i_form.value == 0, "This is not an I form branch but a B form branch"
+    assert dut.o_bu_b_form.value == 1, "This is a B form branch"
+    assert dut.o_bu_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_bu_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_bu_cond_TAR.value == 0, "This is not a conditional branch to TAR"
 
     dut.i_instr = int(utils.branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=16, S4=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.is_branch_cond_to_LR.value == 1, "This is a conditional branch to LR"
-    assert dut.is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_bu_instr.value.binstr == '10000100000010100010011100110010', "Instruction do not match"
+    assert dut.o_bu_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_bu_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_bu_cond_LR.value == 1, "This is a conditional branch to LR"
+    assert dut.o_bu_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_bu_cond_TAR.value == 0, "This is not a conditional branch to TAR"
 
     dut.i_instr = int(utils.branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=528, S4=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.is_branch_cond_to_CTR.value == 1, "This is a conditional branch to CTR"
-    assert dut.is_branch_cond_to_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_bu_instr.value.binstr == '10000100001010100010011100110010', "Instruction do not match"
+    assert dut.o_bu_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_bu_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_bu_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_bu_cond_CTR.value == 1, "This is a conditional branch to CTR"
+    assert dut.o_bu_cond_TAR.value == 0, "This is not a conditional branch to TAR"
 
     dut.i_instr = int(utils.branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=560, S4=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.is_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.is_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.is_branch_cond_to_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.is_branch_cond_to_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.is_branch_cond_to_TAR.value == 1, "This is a conditional branch to TAR"
+    assert dut.o_bu_instr.value.binstr == '10000110001010100010011100110010', "Instruction do not match"
+    assert dut.o_bu_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_bu_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_bu_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_bu_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_bu_cond_TAR.value == 1, "This is a conditional branch to TAR"
