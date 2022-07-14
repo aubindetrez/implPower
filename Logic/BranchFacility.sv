@@ -5,34 +5,92 @@
 module BranchFacility (
     input logic i_clk,
     input logic i_rst,
-    input logic i_en,  // Enable
     input logic i_32b_mode,
-    input logic [63:0] i_instr,
+    input logic i_stall,  // Stalls: Do not update the nia
+
+    // From/To Instruction Fetch
     output logic [63:0] o_next_instr_addr,  // Address of the next instruction
-    input logic i_is_branch,
-    input logic i_is_branch_to_link_register,
+
+    // From/To Instruction Identify
+    input logic [31:0] i_instr,  // output instruction to the branch unit
+    input logic i_en,  // Enable branch unit
+    input logic i_i_form,  // if o_bu_en is set, indication the BU what form is the instr.
+    input logic i_b_form,  // if o_bu_en is set, indication the BU what form is the instr.
+    input logic i_cond_LR,  // if o_bu_en is set, indication the BU what form is the instr.
+    input logic i_cond_CTR,  // if o_bu_en is set, indication the BU what form is the instr.
+    input logic i_cond_TAR,  // if o_bu_en is set, indication the BU what form is the instr.
+
+    // From/To the Register File
     input logic [31:0] i_condition_register,  // Section 2.3.1
-    input logic [63:0] i_link_register,  // Section 2.3.2
-    input logic [63:0] i_count_register  // Section 2.3.3
+    input logic [63:0] i_target_address_register,  // Section 2.3.2
+    input logic [63:0] i_count_register,  // Section 2.3.3
+    output logic [63:0] o_link_register,  // Section 2.3.3
+
+    // Debug and Error
+    output logic err_branch_on_stall  // we should not get a new instruction to process on a stall
 );
-  // TODO decode what kind of branch is it
-  // - Branch with I/B-form instruction + AA (is it an offset?)
-  // - Branch with XL-form + is it LR or CTR
+  logic boot;  // Set after reset to make sure we start with address 0
+  always_ff @(posedge i_clk or posedge i_rst) begin
+    if (i_rst == 1'b1) boot <= 1'b1;
+    else boot <= 1'b0;
+  end
 
-  // Section 2.4 describe 5 operations
-  // - Add a displacement to the branch address (branch or branch cond. AA=0)
-  // - Use an absolute address (branch or branch cond. AA=1)
-  // - Use the Link Register (branch cond. to LR)
-  // - Use the Count Register (branch cond. to CTR)
-  // - Use the Target Address Register (branch cond. to TAR)
+  // TODO use _d and _q here?
+  logic [63:0] cia;  // Current Instruction Address
+  logic [63:0] nia;  // Next Instruction Address
 
-  // TODO execute: compute the effective address (Next Instruction Address)
-  // TODO update next_instr_addr accordingly
+  assign o_next_instr_addr = nia;
+  always_ff @(posedge i_clk or posedge i_rst) begin
+    if (i_rst == 1'b1) cia <= 64'b0;
+    else if (i_stall == 1'b0) cia <= nia;
+  end
 
-  // TODO
-  logic provide_return_addr;  // LK=1 -> return address is to be provided
-  // if LK=1 then save branch's address+4 in the Link Register (LR)
+  assign err_branch_on_stall = i_stall & i_en;
+  // Error description: What if i_stall is set and we do not update
+  // cia but receive i_en/i_instr, we'll lose
+  // nia
+
+  logic provide_return_addr;
+  assign provide_return_addr = i_instr[31];
+  // If LK=1 -> then save current address+4 in the Link Register (LR)
   // (regardless of whether the branch is taken)
+
+  logic [63:0] lr_d;  // next Link Register
+  logic [63:0] lr_q;  // Link Register
+  always_ff @(posedge i_clk or posedge i_rst) begin
+    if (i_rst == 1'b1) lr_q <= 64'b0;
+    else lr_q <= lr_d;
+  end
+  assign lr_d = (i_en == 1'b1 && provide_return_addr == 1'b1) ? cia + 4 : lr_q;
+  assign o_link_register = lr_q;
+
+  logic [25:0] li;  // LI field in a Branch I-form instruction, see Section 2.4
+  assign li = {2'b00, i_instr[29:6]};  // LI << 2
+  logic [63:0] exts_li;  // Sign extended LI
+  assign exts_li = {li, {38{li[0]}}};  // LI[0] is the MSB and the sign
+
+  logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
+  assign aa = i_instr[31];
+
+  always_comb begin
+    if (i_en == 1'b1) begin  // This is a branch
+      if (i_i_form == 1'b1) begin
+        if (aa == 1'b0) begin
+          // TODO Reuse the 64b adder (and check if the synthesis does
+          // a good job)
+          nia = exts_li + cia;  // CIA = address of the current instruction
+          // TODO high order 32bits set to 0 in 32 bit mode
+        end else begin
+          nia = exts_li;
+          // TODO high order 32bits set to 0 in 32 bit mode
+        end
+      end
+      // TODO Other kind of branch
+    end else begin  // Not a branch
+      if (boot == 1'b1) nia = cia;
+      else nia = cia + 4;  // sequential instructions
+    end
+  end
 
 
   logic is_branch_conditional;  // 1'b1 if it is a branch conditional instruction
@@ -81,5 +139,11 @@ module BranchFacility (
   //                                                        branch was taken
   // 10 Reserved
   // 11 AND bclr, bcctr, bctar -> target address it not predictable
+
+  initial begin
+    $dumpfile("trace.vcd");
+    $dumpvars(0, BranchFacility);
+    #1;
+  end
 
 endmodule
