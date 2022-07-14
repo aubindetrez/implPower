@@ -65,6 +65,7 @@
 - GDSII a file containing the physical design of a chip see OpenLane for more
   information
 - Branch Unit (BU)
+- Register File (RF) - A branch for all registers
 
 # Notation
 I am using the same notation at the PowerISA.
