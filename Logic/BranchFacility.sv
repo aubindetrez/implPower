@@ -50,8 +50,8 @@ module BranchFacility (
   // cia but receive i_en/i_instr, we'll lose
   // nia
 
-  logic provide_return_addr;
-  assign provide_return_addr = i_instr[31];
+  logic lk;
+  assign lk = i_instr[31];
   // If LK=1 -> then save current address+4 in the Link Register (LR)
   // (regardless of whether the branch is taken)
 
@@ -61,8 +61,13 @@ module BranchFacility (
     if (i_rst == 1'b1) lr_q <= 64'b0;
     else lr_q <= lr_d;
   end
-  assign lr_d = (i_en == 1'b1 && provide_return_addr == 1'b1) ? cia + 4 : lr_q;
+  assign lr_d = {<<1{le_lr_d}};
   assign o_link_register = lr_q;
+
+  logic [63:0] le_lr_d;
+  assign le_lr_d = (i_en == 1'b1 && lk == 1'b1) ? le_cia + 4 : le_lr_q;
+  logic [63:0] le_lr_q;
+  assign le_lr_q = {<<1{lr_q}};
 
   logic [25:0] li;  // LI field in a Branch I-form instruction, see Section 2.4
   assign li = {2'b00, i_instr[29:6]};  // LI << 2
@@ -70,7 +75,14 @@ module BranchFacility (
   assign exts_li = {li, {38{li[0]}}};  // LI[0] is the MSB and the sign
 
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
-  assign aa = i_instr[31];
+  assign aa = i_instr[30];
+
+  logic [63:0] le_exts_li;  // LittleEndian version of exts_li
+  assign le_exts_li = {<<1{exts_li}};  // Swap endianess, now MSB is [63]
+  logic [63:0] le_cia;
+  assign le_cia = {<<1{cia}};
+  logic [63:0] le_nia;
+  assign nia = {<<1{le_nia}};
 
   always_comb begin
     if (i_en == 1'b1) begin  // This is a branch
@@ -78,17 +90,17 @@ module BranchFacility (
         if (aa == 1'b0) begin
           // TODO Reuse the 64b adder (and check if the synthesis does
           // a good job)
-          nia = exts_li + cia;  // CIA = address of the current instruction
+          le_nia = le_exts_li + le_cia;  // CIA = address of the current instruction
           // TODO high order 32bits set to 0 in 32 bit mode
         end else begin
-          nia = exts_li;
+          le_nia = le_exts_li;
           // TODO high order 32bits set to 0 in 32 bit mode
         end
       end
       // TODO Other kind of branch
     end else begin  // Not a branch
-      if (boot == 1'b1) nia = cia;
-      else nia = cia + 4;  // sequential instructions
+      if (boot == 1'b1) le_nia = le_cia;
+      else le_nia = le_cia + 4;  // sequential instructions
     end
   end
 

@@ -6,8 +6,13 @@ from cocotb.triggers import FallingEdge
 from cocotb.triggers import Timer
 import cocotb.simulator as simulator
 import utils
+import numpy # For uint64
 
 DEBUG = True # Main switch to turn on/off debugging prints
+def adds_64b(a: int, b: int) -> int:
+    ua = numpy.uint64(a)
+    ub = numpy.uint64(b)
+    return int(ua+ub)
 
 async def init_sequence(dut, mode):
     clock = Clock(dut.i_clk, 1, units="ns") # 1ns clock period
@@ -65,7 +70,7 @@ async def test_bf_64b_branh_i(dut):
     dut.i_target_address_register.value = utils.random_64b()
     dut.i_count_register.value = utils.random_64b()
     await Timer(100, units="ps") # Give time for the combinatinal logic
-    assert dut.o_next_instr_addr.value.integer == 4, """If it is not stalling, this is
+    assert dut.o_next_instr_addr.value.integer == utils.BE(4, 64), """If it is not stalling, this is
     a sequential instruction (no branch), the NIA should be CIA+4"""
 
     await RisingEdge(dut.i_clk) # Icache will load data from address o_next_instr_addr (NIA)
@@ -73,9 +78,9 @@ async def test_bf_64b_branh_i(dut):
 
     # The Identify unit returns a Branch I-form instruction with AA=1 and LK=1
     LI = 0xCAFE
-    #LI = 0x80CAFE # TODO Test this negative LI
     dut.i_instr.value = int(utils.branch_i_form_to_string(PO=18, LI=LI, AA=1, LK=1), 2)
     expected_branch_target_addr = utils.exts(LI << 2, length=26, new_length=64)
+    print("Sending JUMP to address: "+str(expected_branch_target_addr))
     dut.i_stall.value = 0b0 # No stall
     dut.i_en.value = 0b1 # This is a branch
     dut.i_i_form.value = 0b1
@@ -87,20 +92,52 @@ async def test_bf_64b_branh_i(dut):
     dut.i_target_address_register.value = utils.random_64b()
     dut.i_count_register.value = utils.random_64b()
     await Timer(100, units="ps") # Give time for the combinatinal logic
-    # The LI field is 30-6 = 24 bits
-    # When concatenated with 0b00 it becomes 24+2=26 bits
-    # Therefore the sign extention must look for the sign bit at offset 26
     assert dut.o_next_instr_addr.value.integer == utils.BE(expected_branch_target_addr, 64), """According to
     ISA section 2.4 if LK=1 and AA=1 then NIA = sign_extended(LI << 2)
     """
     await RisingEdge(dut.i_clk) # Icache will load data from address o_next_instr_addr (NIA)
     await Timer(200, units="ps") # Give some time to the Icache to return an instruction
+    assert dut.cia.value.integer == utils.BE(expected_branch_target_addr, 64), """Internal signal CIA should
+    take the value from NIA"""
+    print("JUMP worked")
 
     # Check if the link register has been updated by last instruction
-    assert dut.o_link_register.value.integer == 8, """See ISA section 2.4, if
+    assert dut.o_link_register.value.integer == utils.BE(8, 64), """See ISA section 2.4, if
     LK=1 then the effective address of the instruction folloging the branch
     instruction is placed on the Link register"""
 
+    # The Identify unit returns a Branch I-form instruction with AA=0 and LK=0
+    # And a negative LI
+    LI = 0x800FEE
+    dut.i_instr.value = int(utils.branch_i_form_to_string(PO=18, LI=LI, AA=0, LK=0), 2)
+    exts_li = utils.exts(LI << 2, length=26, new_length=64) # See ISA section 2.4
+    expected_branch_target_addr = adds_64b(expected_branch_target_addr, exts_li) # 64b addition
+    print("Sending JUMP to address (CIA+LI): "+str(expected_branch_target_addr))
+    dut.i_stall.value = 0b0 # No stall
+    dut.i_en.value = 0b1 # This is a branch
+    dut.i_i_form.value = 0b1
+    dut.i_b_form.value = 0b0
+    dut.i_cond_LR.value = 0b0
+    dut.i_cond_CTR.value = 0b0
+    dut.i_cond_TAR.value = 0b0
+    dut.i_condition_register.value = utils.random_32b()
+    dut.i_target_address_register.value = utils.random_64b()
+    dut.i_count_register.value = utils.random_64b()
+    await Timer(100, units="ps") # Give time for the combinatinal logic
+    print("Address returned by the device under test: "+str(dut.o_next_instr_addr.value.integer))
+    assert dut.o_next_instr_addr.value.integer == utils.BE(expected_branch_target_addr, 64), """According to
+    ISA section 2.4 if AA=0 then NIA = CIA + sign_extended(LI << 2)
+    """
+    await RisingEdge(dut.i_clk) # Icache will load data from address o_next_instr_addr (NIA)
+    await Timer(200, units="ps") # Give some time to the Icache to return an instruction
+    assert dut.cia.value.integer == utils.BE(expected_branch_target_addr, 64), """Internal signal CIA should
+    take the value from NIA"""
+    print("JUMP worked")
+
+    # Check if the last instruction didn't update the Link Register (LR)
+    assert dut.o_link_register.value.integer == utils.BE(8, 64), """See ISA section 2.4, this
+    instruction should not update the Link Register (LK=0)
+    """
 
     # TODO The Identify unit returns a Branch I-form instruction with AA=0 and LK=1
 
