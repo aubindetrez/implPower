@@ -61,7 +61,7 @@ module BranchFacility (
     if (i_rst == 1'b1) lr_q <= 64'b0;
     else lr_q <= lr_d;
   end
-  assign lr_d = (i_en == 1'b1 && lk == 1'b1) ? cia + 4 : lr_q;;
+  assign lr_d = (i_en == 1'b1 && lk == 1'b1) ? cia + 4 : lr_q;
   assign o_link_register = lr_q;
 
   logic [0:25] li;  // LI field in a Branch I-form instruction, see Section 2.4
@@ -103,7 +103,7 @@ module BranchFacility (
 
   // Software hit whether the branch is likely to be taken
   // See Power ISA section 2.4
-  logic [0:1] at; // Branch likeliness
+  logic [0:1] at;  // Branch likeliness
   // 00 -> No hint is given
   // 01 -> Reserved
   // 10 -> The branch is very likely not to be taken
