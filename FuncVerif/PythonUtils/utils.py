@@ -11,17 +11,9 @@ def random_64b() -> int:
 
 def exts(num: int, length: int, new_length: int) -> int:
     """ sign-extend an integer of size length to new_length"""
-    string = bin(num)[2:]
-    # The MSB (length's bit) is the sign
-    # bin() ignores leading zeros, therefore if the length of bin()'s output
-    # is length then MSB is '1'
-    if len(string) < length:
-        sign = '0'
-    elif len(string) == length:
-        sign = '1'
-    else:
-        print("Error: exts: {} does not fit in {} bits".format(num, length))
-        return 0
+    string = int_to_bin(length, num)
+    # MSB is at offset 0
+    sign = string[0]
     while len(string) < new_length:
         string = sign + string
     return int(string, 2)
@@ -45,7 +37,7 @@ def branch_i_form_to_string(PO, LI, AA, LK):
     AA_str = int_to_bin(1, AA)
     LK_str = int_to_bin(1, LK)
     result = PO_str + LI_str + AA_str + LK_str
-    return result[::-1] # LSB -> MSB
+    return result + 32*"0" # Big Endian
 
 def branch_b_form_to_string(PO, BO, BI, BD, AA, LK):
     """
@@ -61,7 +53,7 @@ def branch_b_form_to_string(PO, BO, BI, BD, AA, LK):
     AA_str = int_to_bin(1, AA)
     LK_str = int_to_bin(1, LK)
     result = PO_str + BO_str + BI_str + BD_str + AA_str + LK_str
-    return result[::-1] # LSB -> MSB
+    return result + 32*"0" # Big Endian
 
 def branch_xl_form_to_string(PO, S1, S2, S3, XO, S4):
     """
@@ -80,7 +72,7 @@ def branch_xl_form_to_string(PO, S1, S2, S3, XO, S4):
     XO_str = int_to_bin(10, XO)
     S4_str = int_to_bin(1, S4)
     result = PO_str + S1_str + S2_str + S3_str + XO_str + S4_str
-    return result[::-1] # Little Endian / Big Endian
+    return result + 32*"0" # Big Endian
 
 def BE(num: int, length: int) -> int:
     """ Little Endian / Big Endian """
@@ -95,17 +87,15 @@ class TestPythonUtils(unittest.TestCase):
     def test_branch_i_form(self):
         # Checking branch_i_form_to_string gives the expect result
         self.assertEqual(branch_i_form_to_string(PO=18, LI=0xcafe, AA=1, LK=1),
-                "11011111110101001100000000010010")
+                "01001000000000110010101111111011"+32*"0")
 
     def test_branch_b_form(self):
-        # Checking branch_i_form_to_string gives the expect result
         self.assertEqual(branch_b_form_to_string(PO=16, BO=18, BI=27, BD=0xafe, AA=1, LK=0),
-                "01011111110101001101101001000010")
+                "01000010010110110010101111111010"+32*"0")
 
     def test_branch_xl_form(self):
-        # Checking branch_i_form_to_string gives the expect result
         self.assertEqual(branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=0x16, S4=1),
-                "10110100000010100010011100110010")
+                "01001100111001000101000000101101"+32*"0")
     def test_exts(self):
         self.assertEqual(exts(0b11, 3, 6), 0b000011)
         self.assertEqual(exts(0b100, 3, 6), 0b111100)

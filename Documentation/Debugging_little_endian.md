@@ -88,3 +88,40 @@ You get the following code:
 You need to read the hexadecimal representation from right to left.
 `20 00 80 4e` becomes `4e 80 00 20` and you end up with the Big Endian
 representation.
+
+## Example: Decoding a Big endian I-form branch
+
+Example compiled for `powerpc64` (Big endian):
+```
+0000000000000a24 <.test>
+...
+a84:	4b ff ff a1 	bl      a24 <.test>
+...
+```
+The binary representation would be `0100 1011 1111 1111 1111 1111 1010 0001`
+According to the Power ISA section 2.4 you can decode it:
+- OP = 18 (bits 0 to 5)
+- LI = `1111 1111 1111 1111 1110 1000` (bits 6 to 29)
+- AA = 0 (Relative jump) (bit 30)
+- LK = 1 (bit 31)
+
+To calculate the branch target address you can:
+Shift LI to the left: `LI || 0b00 == 1111 1111 1111 1111 1110 1000 00`
+This is a negative number, egual to `-96` which makes sense since `0xa84`
+(address of the `bl` instruction) if `96` bytes away from `.test` at address
+`0xa24`.
+
+## Example: Decoding a Little endian I-form branch
+```
+000000000000081c <test>:
+...
+88c:	91 ff ff 4b 	bl      81c <test>
+```
+Let's first write convert it to BigEndian.
+`0x91 0xff 0xff 0x4b` becomes `0x4bffff91`
+
+We can decode it the same way we did for the BigEndian example above.
+The binary form is: `0100 1011 1111 1111 1111 1111 1001 0001`
+Let's just look at LI = `11 1111 1111 1111 1111 1001 00`
+Shift it just like earlier: `LI || 0b00 == 11 1111 1111 1111 1111 1001 0000`
+We get an offset of `-112` (a jump from `0x88c` to `0x81c`).

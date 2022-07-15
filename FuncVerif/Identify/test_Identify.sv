@@ -8,8 +8,8 @@ module test_Identify;
   logic clk = 1'b0;
   logic rst = 1'b1;
   logic en = 1'b0;
-  logic [63:0] instr = 64'b0;
-  logic [31:0] bu_instr;  // output instruction to the branch unit
+  logic [0:63] instr = 64'b0;
+  logic [0:31] bu_instr;  // output instruction to the branch unit
   logic bu_en;  // Enable branch unit
   logic bu_i_form;  // if o_bu_en is set, indication the BU what form is the instr.
   logic bu_b_form;  // if o_bu_en is set, indication the BU what form is the instr.
@@ -45,9 +45,9 @@ module test_Identify;
     en  = 1'b1;
     $display("Resset sequence done");
 
-    instr = {32'b0, 32'b11011111110101001100000000010010};
+    instr = {32'b01001000000000110010101111111011, 32'b0};
     #1;
-    assert (bu_instr == 32'b11011111110101001100000000010010);
+    assert (bu_instr == 32'b01001000000000110010101111111011);
     assert (bu_en == 1'b1);  // It is a branch
     assert (bu_i_form == 1);  // It is a I-form
     assert (bu_b_form == 0);

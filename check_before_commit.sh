@@ -45,7 +45,7 @@ then
 fi
 for file in `find ./ -name "*.sv"`
 do echo ">>> Running Linter on $file"
-    verible-verilog-lint $file
+    verible-verilog-lint --rules=-packed-dimensions-range-ordering,-unpacked-dimensions-range-ordering $file
     if [[ $? -ne 0 ]]
     then echo "==> Check failed, please fix it and try again"
         exit 1
