@@ -26,7 +26,7 @@ then
     echo "Make sure it is in your PATH before trying again"
     exit 1
 fi
-for file in `find ./Logic/ -name "*.sv"`
+for file in `find ./ -name "*.sv"`
 do echo ">>> Running formatter on $file"
     verible-verilog-format --inplace $file
     if [[ $? -ne 0 ]]
@@ -43,7 +43,7 @@ then
     echo "Make sure it is in your PATH before trying again"
     exit 1
 fi
-for file in `find ./Logic/ -name "*.sv"`
+for file in `find ./ -name "*.sv"`
 do echo ">>> Running Linter on $file"
     verible-verilog-lint $file
     if [[ $? -ne 0 ]]

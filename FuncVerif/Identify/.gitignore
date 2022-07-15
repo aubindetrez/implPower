@@ -1,3 +1,5 @@
 Identify.v
 results.xml
 sim_build
+sv.log
+sv_bin

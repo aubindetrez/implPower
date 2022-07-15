@@ -23,7 +23,8 @@ module Identify (
   logic is_prefixed;
   logic [5:0] primary_opcode;
 
-  assign primary_opcode = i_instr[5:0];  // Power ISA v3.1 Section 1.6.1
+  // 6 most signification bits are the OPcode according to Power ISA v3.1 Section 1.6.1
+  assign primary_opcode = i_instr[5:0];
 
   // Detect if [0:31] is an prefix - Power ISA Section 1.6.3
   assign is_prefixed = (primary_opcode == 6'b100000) ? 1'b1 : 1'b0;

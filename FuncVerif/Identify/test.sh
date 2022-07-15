@@ -1,8 +1,24 @@
-echo ">>> Running Verification (Actual Logic simulation)"
+echo ">>> Running SystemVerilog based verification"
+iverilog -g2012 -Wall -DSIMULATION test_Identify.sv -o sv_bin && ./sv_bin | tee sv.log
+if [[ $? != 0 ]]
+then
+    echo ">>> Error: Verification failed (returned an error)"
+    exit 1
+fi
+fails=`grep "ERROR" sv.log | wc -l`
+if ! [ $fails -eq 0 ]
+then
+    echo ">>> Error: Verification failed (sv.log contains \"ERROR\")"
+    exit 1
+fi
+
+
+
+echo ">>> Running Python based Verification"
 make
 
 # Check if a result if available
-if ! [ -f $result_file ]
+if ! [ -f "results.xml" ]
 then
     echo ">>> Error: Verification failed"
     exit 1
