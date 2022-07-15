@@ -2,6 +2,21 @@ import unittest
 import random
 # Non-Unit specific helper functions for OpenPower verification
 
+def random_bin(string: str) -> int:
+    """
+    Replace all '?' in the input with a random 0 or 1
+    """
+    out=""
+    for c in string:
+        if c == '?':
+            out = out + str(random.randint(0,1))
+        elif c == '0' or c == '1':
+            out = out+c
+        else:
+            raise TypeError("{} is not a 0 or 1".format(c))
+            return 0
+    return int(out, 2)
+
 def random_bit() -> int:
     return random.randint(0, 1)
 def random_32b() -> int:
@@ -108,6 +123,11 @@ class TestPythonUtils(unittest.TestCase):
         self.assertTrue(rd>=0 and rd<=2**64-1)
     def test_be(self):
         self.assertEqual(BE(0b10000111, 8), 0b11100001)
+    def test_random_bin(self):
+        self.assertEqual(random_bin("0110"), 0b110)
+        for i in range(5):
+            val = random_bin("01?0")
+            self.assertTrue(val == 0b110 or val == 0b100)
 
 if __name__ == '__main__':
     unittest.main()
