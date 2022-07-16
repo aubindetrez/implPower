@@ -27,3 +27,27 @@ stage to stall.
 ## Effective Address
 Effective Address Calculation is discussed in the Power ISA, page 29.
 
+## Example: How to decode I-form Branches
+Here is an I-form Branch Instruction (generated using `objdump`, see [Debugging_little_endian.md](Debugging_little_endian.md))
+```
+0000000000000a24 <.test>
+...
+a84:	4b ff ff a1 	bl      a24 <.test>
+...
+```
+The binary representation would be `0100 1011 1111 1111 1111 1111 1010 0001`
+According to the Power ISA section 2.4 you can decode it:
+- OP = 18 (bits 0 to 5) -> This is a I-form branch
+- LI = `1111 1111 1111 1111 1110 1000` (bits 6 to 29)
+- AA = 0 (Relative jump) (bit 30)
+- LK = 1 (bit 31) -> The Link Register will updated (`CIA + 4 = 0xa84 + 4 = 0xa86`)
+
+To calculate the branch target address you can:
+Shift LI to the left: `LI || 0b00 == 1111 1111 1111 1111 1110 1000 00`
+This is a negative number, egual to `-96` which makes sense since `0xa84`
+(address of the `bl` instruction) if `96` bytes away from `.test` at address
+`0xa24`.
+
+## Example: How to decode B-form Branches
+TODO disassemble a problem and decode the instruction like I did for I-form Branches
+

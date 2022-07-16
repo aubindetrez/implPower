@@ -48,13 +48,21 @@ module BranchFacility (
   // nia
   assign err_branch_on_stall = i_stall & i_en;
 
-  logic [0:63] ctr_d, ctr_q; // Count Register
+  logic decr_ctr;  // 1'b1 if ctr need to be decremented
+  assign decr_ctr = ~bo[2] & i_b_form;  // See ISA Section 2.4
+  logic [0:63] ctr_d, ctr_q;  // Count Register
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) ctr_q <= 64'b0;
     else ctr_q <= ctr_d;
   end
-  assign ctr_d = ; // TODO
+  assign ctr_d = (decr_ctr == 1'b1) ? ctr_q - 1 : ctr_q;
   assign o_count_register = ctr_q;
+  logic ctr_d_null;
+  assign ctr_d_null = (ctr_d == 64'b0) ? 1 : 0;
+
+  // For Branch Conditional B-form, specifies the CTR bit to be tested
+  logic [0:4] bi;
+  assign bi = i_instr[11:15];
 
   logic lk;
   assign lk = i_instr[31];
@@ -71,10 +79,27 @@ module BranchFacility (
   logic [0:25] li;  // LI field in a Branch I-form instruction, see Section 2.4
   assign li = {i_instr[6:29], 2'b00};  // LI << 2
   logic [0:63] exts_li;  // Sign extended LI
-  assign exts_li = {{38{li[0]}}, li};  // LI[0] is the MSB and the sign
+  assign exts_li = {{38{li[0]}}, li};  // LI[0] is the MSB (and the sign)
 
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
   assign aa = i_instr[30];
+
+  logic b_form_branch_taken;
+  // See Power ISA Section 2.5 Figure 40
+  always_comb begin
+    unique case (bo) inside
+      5'b0000?: b_form_branch_taken = ~ctr_d_null & ~i_condition_register[bi];
+      5'b0001?: b_form_branch_taken = ctr_d_null & ~i_condition_register[bi];
+      5'b001??: b_form_branch_taken = ~i_condition_register[bi];
+      5'b0100?: b_form_branch_taken = ~ctr_d_null & i_condition_register[bi];
+      5'b0101?: b_form_branch_taken = ctr_d_null & i_condition_register[bi];
+      5'b011??: b_form_branch_taken = i_condition_register[bi];
+      5'b1?00?: b_form_branch_taken = ~ctr_d_null;
+      5'b1?01?: b_form_branch_taken = ctr_d_null;
+      5'b1?1??: b_form_branch_taken = 1'b1;
+      default:  b_form_branch_taken = 1'b0;
+    endcase
+  end
 
   always_comb begin
     if (i_en == 1'b1) begin  // This is a branch
@@ -88,6 +113,16 @@ module BranchFacility (
           nia = exts_li;
           // TODO high order 32bits set to 0 in 32 bit mode
         end
+      end else if (i_b_form == 1'b1) begin
+        if (b_form_branch_taken == 1'b1) begin
+          if (aa == 1'b0) begin
+            nia = exts_bd + cia;
+            // TODO high order 32bits set to 0 in 32 bit mode
+          end else begin
+            nia = exts_bd;
+            // TODO high order 32bits set to 0 in 32 bit mode
+          end
+        end else nia = cia;  // Branch is not taken
       end
       // TODO Other kind of branch
     end else begin  // Not a branch
@@ -96,9 +131,15 @@ module BranchFacility (
     end
   end
 
+  logic [0:15] bd;
+  assign bd = {i_instr[16:29], 2'b00};  // BD << 2
+  logic [0:63] exts_bd;
+  assign exts_bd = {{48{bd[0]}}, bd};  // BD[0] is the MSB (and the sign)
+
   // For Branch Conditional instruction, the BO field specifies the condition
-  // see Power ISA section 2.4
+  // For Branch Conditional B-form (see Power ISA section 2.4)
   logic [0:4] bo;  // Branch condition
+  assign bo = i_instr[6:10];
 
   // Software hit whether the branch is likely to be taken
   // See Power ISA section 2.4
@@ -109,16 +150,16 @@ module BranchFacility (
   // 11 -> The branch is very likely to be taken
   always_comb begin
     unique case (bo) inside
-      5'b0000?: at = 2'b00;  // No hint
-      5'b0001?: at = 2'b00;  // No hint
+      5'b0000?: at = 2'b00;
+      5'b0001?: at = 2'b00;
       5'b001??: at = bo[3:4];
-      5'b0100?: at = 2'b00;  // No hint
-      5'b0101?: at = 2'b00;  // No hint
+      5'b0100?: at = 2'b00;
+      5'b0101?: at = 2'b00;
       5'b011??: at = bo[3:4];
       5'b1?00?: at = {bo[1], bo[4]};
       5'b1?01?: at = {bo[1], bo[4]};
-      5'b1?1??: at = 2'b11;  // Always taken
-      default:  at = 2'b00;  // No hint
+      5'b1?1??: at = 2'b11;
+      default:  at = 2'b00;
     endcase
   end
 
@@ -135,12 +176,16 @@ module BranchFacility (
   // BH=10 Reserved -> (11)
   // BH=11 AND bclr, bcctr, bctar -> (10)
   // This signal is valid if is_branch_to_reg is 1'b1
-  logic [0:1] target_addr_cond_hint; // Target Address hints for Conditional Branches
+  logic [0:1] target_addr_cond_hint;  // Target Address hints for Conditional Branches
   // 00 -> Subroutine return
   // 01 -> Likely to be the same as the last time the branch was taken
   // 10 -> Not Predictable
   // 11 -> Reserved
-  
+
+  // TODO Add coverage points to make sure we cover:
+  // - B-Branch and the 9 options for BO
+  // - B-Branch and the 2 options for at
+
 
   initial begin
     $dumpfile("trace.vcd");
