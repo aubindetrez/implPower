@@ -23,7 +23,7 @@ module BranchFacility (
     // From/To the Register File
     input logic [0:31] i_condition_register,  // Section 2.3.1
     input logic [0:63] i_target_address_register,  // Section 2.3.2
-    input logic [0:63] i_count_register,  // Section 2.3.3
+    output logic [0:63] o_count_register,  // Section 2.3.3
     output logic [0:63] o_link_register,  // Section 2.3.3
 
     // Debug and Error
@@ -35,28 +35,32 @@ module BranchFacility (
     else boot <= 1'b0;
   end
 
-  // TODO use _d and _q here?
   logic [0:63] cia;  // Current Instruction Address
   logic [0:63] nia;  // Next Instruction Address
-
   assign o_next_instr_addr = nia;
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) cia <= 64'b0;
     else if (i_stall == 1'b0) cia <= nia;
   end
 
-  assign err_branch_on_stall = i_stall & i_en;
   // Error description: What if i_stall is set and we do not update
   // cia but receive i_en/i_instr, we'll lose
   // nia
+  assign err_branch_on_stall = i_stall & i_en;
+
+  logic [0:63] ctr_d, ctr_q; // Count Register
+  always_ff @(posedge i_clk or posedge i_rst) begin
+    if (i_rst == 1'b1) ctr_q <= 64'b0;
+    else ctr_q <= ctr_d;
+  end
+  assign ctr_d = ; // TODO
+  assign o_count_register = ctr_q;
 
   logic lk;
   assign lk = i_instr[31];
   // If LK=1 -> then save current address+4 in the Link Register (LR)
   // (regardless of whether the branch is taken)
-
-  logic [0:63] lr_d;  // next Link Register
-  logic [0:63] lr_q;  // Link Register
+  logic [0:63] lr_d, lr_q;  // Link Register
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) lr_q <= 64'b0;
     else lr_q <= lr_d;
@@ -71,7 +75,6 @@ module BranchFacility (
 
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
   assign aa = i_instr[30];
-
 
   always_comb begin
     if (i_en == 1'b1) begin  // This is a branch
@@ -92,10 +95,6 @@ module BranchFacility (
       else nia = cia + 4;  // sequential instructions
     end
   end
-
-
-  logic is_branch_conditional;  // 1'b1 if it is a branch conditional instruction
-  // assign is_branch_conditional = TODO
 
   // For Branch Conditional instruction, the BO field specifies the condition
   // see Power ISA section 2.4
@@ -129,16 +128,19 @@ module BranchFacility (
   // - Branch conditional to count register
   // - Branch conditional to target address register
 
-  // This signal is valid if is_branch_to_reg is 1'b1
-  logic [0:1] target_address_hint;  // Also called BH field
   // See Power ISA Section 2.4
-  // 00 AND blrc -> subroutine return
-  // 00 AND bcctr, bctar -> address is likely to be the same as the last
-  //                                              time the branch was taken
-  // 01 AND bclr -> address is likely to be the same as the alst time the
-  //                                                        branch was taken
-  // 10 Reserved
-  // 11 AND bclr, bcctr, bctar -> target address it not predictable
+  // BH=00 AND blrc -> (00)
+  // BH=00 AND bcctr, bctar -> (01)
+  // BH=01 AND bclr -> (01)
+  // BH=10 Reserved -> (11)
+  // BH=11 AND bclr, bcctr, bctar -> (10)
+  // This signal is valid if is_branch_to_reg is 1'b1
+  logic [0:1] target_addr_cond_hint; // Target Address hints for Conditional Branches
+  // 00 -> Subroutine return
+  // 01 -> Likely to be the same as the last time the branch was taken
+  // 10 -> Not Predictable
+  // 11 -> Reserved
+  
 
   initial begin
     $dumpfile("trace.vcd");
