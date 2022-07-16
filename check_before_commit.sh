@@ -1,6 +1,15 @@
 gitroot="`git rev-parse --show-toplevel`"
 cd $gitroot
 
+# Check file references
+echo ">>> Checking if you deleted/renamed a file and didn't update documentation..."
+$gitroot/Tools/check_file_refs.sh
+if [[ $? -ne 0 ]] # Last command didn't return SUCCESS (0)
+then echo "==> Please fix it and try again"
+    exit 1
+fi
+
+# Check Python syntax
 if ! command -v python3 &> /dev/null
 then
     echo "Error: You do not have Python installed"
