@@ -67,6 +67,7 @@
 - Branch Unit (BU)
 - Register File (RF) - A branch for all registers
 - Continuous integration (CI)
+- Device Under Test (DUT)
 
 # Notation
 I am using the same notation at the PowerISA.

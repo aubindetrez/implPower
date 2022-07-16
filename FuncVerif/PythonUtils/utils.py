@@ -120,23 +120,24 @@ def branch_b_form_to_string(PO, BO, BI, BD, AA, LK):
     return result + 32*"0"  # Big Endian
 
 
-def branch_xl_form_to_string(PO, S1, S2, S3, XO, S4):
+def branch_xl_form_to_string(PO, BO, BI, BH, XO, LK):
     """
     Branch Conditional to Link Register XL-form: Section 2.4
     Branch Conditional to Count Register XL-form: Section 2.4
     Branch Conditional to Branch Target Address Register XL-form: Section 2.4
     XL-FORM Section 1.6.1.18
-    0 ---- 6 ---- 11 ---- 16 ---- 21 ---- 31 --
-       PO     S1      S2      S3      XO     S4
+    0 ---- 6 ---- 11 ---- 16 ---- 19 ---- 21 ---- 31 --
+       PO     BO      BI      //      BH      XO     LK
     S stands for Section
     """
     PO_str = int_to_bin(6, PO)
-    S1_str = int_to_bin(5, S1)
-    S2_str = int_to_bin(5, S2)
-    S3_str = int_to_bin(5, S3)
+    BO_str = int_to_bin(5, BO)
+    BI_str = int_to_bin(5, BI)
+    BH_str = int_to_bin(2, BH)
     XO_str = int_to_bin(10, XO)
-    S4_str = int_to_bin(1, S4)
-    result = PO_str + S1_str + S2_str + S3_str + XO_str + S4_str
+    LK_str = int_to_bin(1, LK)
+    result = PO_str + BO_str + BI_str + '0'*3 + BH_str + XO_str + LK_str
+    assert len(result) == 32
     return result + 32*"0"  # Big Endian
 
 
@@ -162,8 +163,10 @@ class TestPythonUtils(unittest.TestCase):
                          "01000010010110110010101111111010"+32*"0")
 
     def test_branch_xl_form(self):
-        self.assertEqual(branch_xl_form_to_string(PO=19, S1=7, S2=4, S3=10, XO=0x16, S4=1),
-                         "01001100111001000101000000101101"+32*"0")
+        #   BO     BO    BI   //  BH      XO      LK
+        # 010011 00111 00100 010  10  0000010110  1
+        self.assertEqual(branch_xl_form_to_string(PO=19, BO=7, BI=4, BH=0b10, XO=0x16, LK=1),
+                         "01001100111001000001000000101101"+32*"0")
 
     def test_exts(self):
         self.assertEqual(exts(0b11, 3, 6), 0b000011)
