@@ -6,47 +6,7 @@ from cocotb.triggers import FallingEdge
 from cocotb.triggers import Timer
 import cocotb.simulator as simulator
 import utils
-import numpy  # For uint64
-
 DEBUG = True  # Main switch to turn on/off debugging prints
-
-
-def select_bit(reg: int, size: int, bit: int) -> int:
-    """
-    >>> select_bit(0b0100, 4, 1)
-    1
-    >>> select_bit(0b0100, 4, 0)
-    0
-    >>> select_bit(0b0100, 4, 2)
-    0
-    """
-    fmt = "{:0"+str(size)+"b}"
-    s = fmt.format(reg)
-    return int(s[bit])
-
-
-def adds_64b(a: int, b: int) -> int:
-    """
-    >>> adds_64b(2**64-1, 1)
-    0
-    >>> adds_64b(374, 698)
-    1072
-    """
-    ua = numpy.uint64(a)
-    ub = numpy.uint64(b)
-    return int(ua+ub)
-
-
-def sub_64b(a: int, b: int) -> numpy.uint64:
-    """
-    >>> sub_64b(1, 2)
-    18446744073709551615
-    >>> sub_64b(2**64-1, -1)
-    0
-    """
-    ua = numpy.uint64(a)
-    ub = numpy.uint64(b)
-    return numpy.uint64(ua-ub)
 
 
 async def init_sequence(dut, mode):
@@ -151,7 +111,7 @@ async def test_bf_64b_branh_i(dut):
         PO=18, LI=LI, AA=0, LK=0)[:32], 2)
     # See ISA section 2.4
     exts_li = utils.exts(LI << 2, length=26, new_length=64)
-    expected_branch_target_addr = adds_64b(
+    expected_branch_target_addr = utils.adds_64b(
         expected_branch_target_addr, exts_li)  # 64b addition
     print("Sending JUMP to address (CIA+LI): " +
           str(expected_branch_target_addr))
@@ -247,46 +207,46 @@ async def test_bf_64b_branch_b(dut):
             LR = CIA+4  # Effective address of the instruction following the Branch Instruction
         # Update expected CTR
         if tBO == 0:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         elif tBO == 1:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         elif tBO == 2:
             pass
         elif tBO == 3:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         elif tBO == 4:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         elif tBO == 5:
             pass
         elif tBO == 6:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         elif tBO == 7:
-            CTR = sub_64b(CTR, 1)
+            CTR = utils.sub_64b(CTR, 1)
         else:
             pass
 
         # Update the expected Next Instruction Address (NIA)
         going_to_branch = False
         if AA == 0:
-            effective_address = adds_64b(CIA, exts_BD)
+            effective_address = utils.adds_64b(CIA, exts_BD)
         else:
             effective_address = exts_BD
         if tBO == 0:
-            going_to_branch = select_bit(
+            going_to_branch = utils.select_bit(
                 reg=CR, size=32, bit=BI) == 0 and CTR != 0  # CTR[0:63]
         elif tBO == 1:
-            going_to_branch = select_bit(
+            going_to_branch = utils.select_bit(
                 reg=CR, size=32, bit=BI) == 0 and CTR == 0
         elif tBO == 2:
-            going_to_branch = select_bit(reg=CR, size=32, bit=BI) == 0
+            going_to_branch = utils.select_bit(reg=CR, size=32, bit=BI) == 0
         elif tBO == 3:
-            going_to_branch = select_bit(
+            going_to_branch = utils.select_bit(
                 reg=CR, size=32, bit=BI) == 1 and CTR != 0
         elif tBO == 4:
-            going_to_branch = select_bit(
+            going_to_branch = utils.select_bit(
                 reg=CR, size=32, bit=BI) == 1 and CTR == 0
         elif tBO == 5:
-            going_to_branch = select_bit(reg=CR, size=32, bit=BI) == 1
+            going_to_branch = utils.select_bit(reg=CR, size=32, bit=BI) == 1
         elif tBO == 6:
             going_to_branch = CTR != 0
         elif tBO == 7:
