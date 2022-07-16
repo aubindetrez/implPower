@@ -3,7 +3,7 @@
 # And warns you if any file in the repository still refers to the old name
 gitroot="`git rev-parse --show-toplevel`"
 
-deleted_files=`git ls-files --deleted --full-name`
+deleted_files=`git ls-files --deleted --full-name $gitroot`
 for file in $deleted_files
 do
     references=`grep -nIr "$file" "$gitroot"`

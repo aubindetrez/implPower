@@ -1,11 +1,20 @@
+#!/usr/bin/env bash
+
 gitroot="`git rev-parse --show-toplevel`"
 cd $gitroot
 
-# Check file references
+# Check file references in Documentation
 echo ">>> Checking if you deleted/renamed a file and didn't update documentation..."
 $gitroot/Tools/check_file_refs.sh
 if [[ $? -ne 0 ]] # Last command didn't return SUCCESS (0)
 then echo "==> Please fix it and try again"
+    exit 1
+fi
+
+# Warn about likely outdated documentation
+$gitroot/Tools/warn_doc_update.sh
+if [[ $? -ne 0 ]] # Last command didn't return SUCCESS (0)
+then echo "==> Fix it and try again"
     exit 1
 fi
 
