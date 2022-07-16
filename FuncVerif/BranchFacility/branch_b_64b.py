@@ -93,9 +93,9 @@ async def test_bf_64b_branch_b(dut):
         # Update the expected Next Instruction Address (NIA)
         going_to_branch = False
         if AA == 0:
-            effective_address = utils.adds_64b(CIA, exts_BD)
+            branch_target_address = utils.adds_64b(CIA, exts_BD)
         else:
-            effective_address = exts_BD
+            branch_target_address = exts_BD
         if tBO == 0:
             going_to_branch = utils.select_bit(
                 reg=CR, size=32, bit=BI) == 0 and CTR != 0  # CTR[0:63]
@@ -119,7 +119,7 @@ async def test_bf_64b_branch_b(dut):
         else:
             going_to_branch = True
         if going_to_branch:
-            NIA = effective_address
+            NIA = branch_target_address
 
         # Print information about the current iteration for debugging purpose
         if DEBUG == True:

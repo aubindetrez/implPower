@@ -3,3 +3,4 @@
 - Always make sure you have proper integer overflow in your Python verification Code
 - If you use a BigEndian ISA use BigEndian Vectors
 - When writing a bash for loop `for item in $array`, do not forget about the `$`
+- Mixing python function arguments when using positional arguments
