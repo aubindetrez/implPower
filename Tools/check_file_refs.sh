@@ -7,9 +7,9 @@ deleted_files=`git ls-files --deleted --full-name $gitroot`
 for file in $deleted_files
 do
     references=`grep -nIr "$file" "$gitroot"`
-    num_refs=`echo $references | wc -l`
-    if ! [ $num_refs -eq 0 ]
+    if [ $? -eq 0 ]
     then
+        num_refs=`echo $references | wc -l`
         echo ">>> You deleted or renamed file: $file"
         echo ">>> But you also need to fix all references to it:"
         echo "$references"
