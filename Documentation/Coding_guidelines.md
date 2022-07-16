@@ -14,8 +14,8 @@ module <MODULE'S NAME> #(
     output logic <INPUT'S NAME>
 );
 
-logic [<SIZE>-1:0] <WIRE'S NAME>; // use little endian for packed arrays
-logic <WIRE'S NAME> [<SIZE>-1]; // use big endian for unpacked arrays
+logic [0:<SIZE>-1] <WIRE'S NAME>; // use Big Endian for packed arrays
+logic <WIRE'S NAME> [<SIZE>-1]; // use Big Endian for unpacked arrays
 
 // use "assign" statements (with blocking '=') for combinational logic
 assign <SOME WIRE> = <...>;
@@ -30,7 +30,7 @@ end
 always_ff
 begin
     // do not use casex and prefer case inside over casez
-    unique case inside (select)
+    unique case (select) inside
         2b'00: e = 1'b0;
         2b'01: e = ...;
         default: e = ...; // set defaults even if not required
@@ -39,10 +39,10 @@ end
 
 // always name your "generate" (if / for...) statements
 
-assign big_bit_vector[7:0] = {4'b0000, smaller_vector[3:0]}; // be explicit
+assign big_bit_vector[0:7] = {4'b0000, smaller_vector[3:0]}; // be explicit
 
-assign counter[3:0] = 4'(counter_q + 4'b1); // explicitely discard the carry
+assign counter[0:3] = 4'(counter_q + 4'b1); // explicitely discard the carry
 
-// Write a testcase using cocotb in verification/<MODULE'S NAME> for every module
+// Write a testcase using cocotb in FuncVerif/<MODULE'S NAME> for every module
 // At least check you can synthetise using yosys (default "synth" or AIG)
 ```

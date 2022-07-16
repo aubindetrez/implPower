@@ -1,5 +1,5 @@
 # implPower
-I small open implementation of the Power ISA v.3.1
+A small open implementation of the Power ISA v.3.1
 
 ## Status
 This is a work in progress, no working prototype yet but let me know if you are
@@ -10,7 +10,7 @@ For more information about the Power ISA see the Wikipedia page: https://en.wiki
 
 ## Common questions
 - What is GPR, CTR... ?
-[Documentation/Notation.md](Documentation/Notation.md) contains all the
+[Documentation/Terminology.md](Documentation/Terminology.md) contains all the
 acronyms and abbreviations used in this project.
 
 - I want to learn about this project, where to get started?
@@ -84,7 +84,7 @@ verilator, iverilog or yosys but it you want to use some other tool you can.
 - Optional: You can synthetize your design for FPGA (cf [Tools/synth_xil](Tools/synth_xil) )
 - Optional: You can try your design on an actual FPGA
 - Optional: You can use OpenLane to check how it would perform on 130nm https://github.com/The-OpenROAD-Project/OpenLane
-- Run all the sanity checks before pushing your changes: [check_before_commit.sh](check_before_commit.sh)
+- Run all the sanity checks before pushing your changes: [check_before_commit.sh](check_before_commit.sh) (Tip: You can also configure is as a local git hook)
 
 Here are some verilog coding guidelines: [Documentation/Coding_guidelines.md](Documentation/Coding_guidelines.md)
 ## See also

@@ -3,6 +3,9 @@
 This is a work in progress, this document contains notes about the
 architecture.
 
+## Graph
+TODO High level graph of the entire architecture
+
 ## Basic classes of instructions
 Instructions are 4 bytes (32 bits = 1 word) or 8 bytes (64 bits = doubleword)
 long.
