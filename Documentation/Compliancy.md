@@ -1,5 +1,7 @@
 # Compliancy to Power Power ISA v.3.1
 You can watch "The Open Power ISA: Architecture Compliancy and Future Foundations" on Youtube: https://youtu.be/ZGvEpd4vNK0
+The Instruction Set Architecture Compliance Definition can be found on the openpowerfoundation.org
+website: https://openpowerfoundation.org/compliance/isa/
 
 Full v3.1 ISA 1419 instructions (including all optional features)
 

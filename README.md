@@ -1,5 +1,16 @@
 # implPower
-A small open implementation of the Power ISA v.3.1
+A small open implementation of the Power ISA v.3.1.
+
+The OpenPower ISA can be downloaded from: https://openpowerfoundation.org/specifications/isa/
+If I get authorization to distribute this document I will upload it to [Documentation/OPF_PowerISA_v3.1B.pdf](Documentation/OPF_PowerISA_v3.1B.pdf).
+
+## License
+
+This project is licensed under the Creative Commons Attribution 4.0 license.
+
+Please read the OpenPower Power ISA End User License Agreement (In the Open Power ISA document) for more information.
+> OPF grants to Recipient the right to license Recipiant Power ISA Cores under the Creative Commons
+> Attribution 4.0 license.
 
 ## Status
 This is a work in progress, no working prototype yet but let me know if you are
