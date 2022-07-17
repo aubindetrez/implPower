@@ -9,5 +9,11 @@
 - Inscape: Snap does not work
 - Inscape: Default text size is 30pt
 - Inscape: hard to switch between groups
+- Github: When you edit an issue or reference it in a commit it adds an item to the issue (After a
+  while it can make it hard to follow discussions). Solution: Make smaller issues, but it can make
+  it harder for new commers if the issue are too technical/too specific.
+- Documentation in every directory (including Readmes), it is much easier to keep up to date when
+  everything is in one directory [Documentation/](Documentation/) (+ the main [README.md](README.md))
+- Shell: When doing `find a_directory/ -name "*.sv"` do not forget the `"`
 
 

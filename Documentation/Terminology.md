@@ -68,6 +68,12 @@
 - Register File (RF) - A branch for all registers
 - Continuous integration (CI)
 - Device Under Test (DUT)
+- PnR (Place and Route)
+- FO4 (Fanout of 4)
+- Static Random Access Memory (SRAM) https://en.wikipedia.org/wiki/Static_random-access_memory
+- Dynamic Random Access Meory (DRAM) https://en.wikipedia.org/wiki/Dynamic_random-access_memory
+- Synchronous dynamic random-access memory (SDRAM) https://en.wikipedia.org/wiki/Synchronous_dynamic_random-access_memory
+- Read-only memory (ROM)
 
 # Notation
 I am using the same notation at the PowerISA.

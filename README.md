@@ -88,6 +88,12 @@ Just create a `test.sh` script which runs your checks and returns `0` on a succe
 Also write a `clean.sh` to clean all your products. I recommand to use cocotb,
 verilator, iverilog or yosys but it you want to use some other tool you can.
 - Write your design in [Logic/](Logic/)
+- Keep it simple: Do not abstact your design more than necessary (Especially if you use Chisel)
+- Keep it simple: If you manage to write a very space/time/energy consuming block in just a few
+  lines add a comment to make sure any reader know how bad it is.
+- Keep it simple: Add comments when things are not obvious
+- If you use a special term add it in [Documentation/Terminology.md](Documentation/Terminology.md)
+- If you say "Ho, better be carefull about that" or "That is annoying" write it in [Documentation/CommonProblems.md](Documentation/CommonProblems.md)
 - Optional: You can use formal verification (using yosys)
 - Optional: You can also use simple SystemVerilog testbenches (cf [Tools/simu](Tools/simu) )
 - Optional: You can synthetize your design in And Inverter Graph to get an idea about the depth and complexity (cf [Tools/synth_aig](Tools/synth_aig) )
