@@ -4,3 +4,10 @@
 - If you use a BigEndian ISA use BigEndian Vectors
 - When writing a bash for loop `for item in $array`, do not forget about the `$`
 - Mixing python function arguments when using positional arguments
+- Inscape: if you create a rectangle in a group, when you want to resize the rectangle it scales
+  it's borders
+- Inscape: Snap does not work
+- Inscape: Default text size is 30pt
+- Inscape: hard to switch between groups
+
+
