@@ -15,5 +15,5 @@
 - Documentation in every directory (including Readmes), it is much easier to keep up to date when
   everything is in one directory [Documentation/](Documentation/) (+ the main [README.md](README.md))
 - Shell: When doing `find a_directory/ -name "*.sv"` do not forget the `"`
-
+- Python: when using `int("0000100101", 2)` forget about the `, 2` (default is decimal)
 

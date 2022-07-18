@@ -49,7 +49,7 @@ module BranchFacility (
   assign err_branch_on_stall = i_stall & i_en;
 
   logic decr_ctr;  // 1'b1 if ctr need to be decremented
-  assign decr_ctr = ~bo[2] & i_b_form;  // See ISA Section 2.4
+  assign decr_ctr = ~bo[2] & (i_b_form | i_cond_LR);  // See ISA Section 2.4
   logic [0:63] ctr_d, ctr_q;  // Count Register
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) ctr_q <= 64'b0;
@@ -81,23 +81,27 @@ module BranchFacility (
   logic [0:63] exts_li;  // Sign extended LI
   assign exts_li = {{38{li[0]}}, li};  // LI[0] is the MSB (and the sign)
 
+  logic [0:63] a_lr_q; // The LR register aligned
+  assign a_lr_q = {lr_q[0:61], 2'b00}; // aligned
+
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
   assign aa = i_instr[30];
 
-  logic b_form_branch_taken;
   // See Power ISA Section 2.5 Figure 40
+  // for b-form branch and bclr (Branch Conditional to Link Register)
+  logic branch_taken;
   always_comb begin
     unique case (bo) inside
-      5'b0000?: b_form_branch_taken = ~ctr_d_null & ~i_condition_register[bi];
-      5'b0001?: b_form_branch_taken = ctr_d_null & ~i_condition_register[bi];
-      5'b001??: b_form_branch_taken = ~i_condition_register[bi];
-      5'b0100?: b_form_branch_taken = ~ctr_d_null & i_condition_register[bi];
-      5'b0101?: b_form_branch_taken = ctr_d_null & i_condition_register[bi];
-      5'b011??: b_form_branch_taken = i_condition_register[bi];
-      5'b1?00?: b_form_branch_taken = ~ctr_d_null;
-      5'b1?01?: b_form_branch_taken = ctr_d_null;
-      5'b1?1??: b_form_branch_taken = 1'b1;
-      default:  b_form_branch_taken = 1'b0;
+      5'b0000?: branch_taken = ~ctr_d_null & ~i_condition_register[bi];
+      5'b0001?: branch_taken = ctr_d_null & ~i_condition_register[bi];
+      5'b001??: branch_taken = ~i_condition_register[bi];
+      5'b0100?: branch_taken = ~ctr_d_null & i_condition_register[bi];
+      5'b0101?: branch_taken = ctr_d_null & i_condition_register[bi];
+      5'b011??: branch_taken = i_condition_register[bi];
+      5'b1?00?: branch_taken = ~ctr_d_null;
+      5'b1?01?: branch_taken = ctr_d_null;
+      5'b1?1??: branch_taken = 1'b1;
+      default:  branch_taken = 1'b0;
     endcase
   end
 
@@ -114,7 +118,7 @@ module BranchFacility (
           // TODO high order 32bits set to 0 in 32 bit mode
         end
       end else if (i_b_form == 1'b1) begin
-        if (b_form_branch_taken == 1'b1) begin
+        if (branch_taken == 1'b1) begin
           if (aa == 1'b0) begin
             nia = exts_bd + cia;
             // TODO high order 32bits set to 0 in 32 bit mode
@@ -123,7 +127,14 @@ module BranchFacility (
             // TODO high order 32bits set to 0 in 32 bit mode
           end
         end else nia = cia;  // Branch is not taken
-      end
+    end else if (i_cond_LR == 1'b1) begin
+        if (branch_taken == 1'b1) begin
+            nia = a_lr_q; // LR register, shifted and sign extended
+            // TODO high order 32bits set to 0 in 32 bit mode
+        end else begin
+            nia = cia + 4;  // sequential instructions
+        end
+    end
       // TODO Other kind of branch
     end else begin  // Not a branch
       if (boot == 1'b1) nia = cia;
@@ -163,7 +174,8 @@ module BranchFacility (
     endcase
   end
 
-  logic is_branch_to_reg;
+  logic is_target_addr_hint_valid;
+  assign is_target_addr_hint_valid = i_cond_LR;
   // TODO Set this signal if the instruction is one of:
   // - Branch conditional to link register
   // - Branch conditional to count register
@@ -175,8 +187,8 @@ module BranchFacility (
   // BH=01 AND bclr -> (01)
   // BH=10 Reserved -> (11)
   // BH=11 AND bclr, bcctr, bctar -> (10)
-  // This signal is valid if is_branch_to_reg is 1'b1
-  logic [0:1] target_addr_cond_hint;  // Target Address hints for Conditional Branches
+  // This signal is valid if is_target_addr_hint_valid is 1'b1
+  logic [0:1] target_addr_cond_hint;  // Target Address hints for Conditional Branches (aka BH)
   // 00 -> Subroutine return
   // 01 -> Likely to be the same as the last time the branch was taken
   // 10 -> Not Predictable

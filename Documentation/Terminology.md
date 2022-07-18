@@ -74,6 +74,8 @@
 - Dynamic Random Access Meory (DRAM) https://en.wikipedia.org/wiki/Dynamic_random-access_memory
 - Synchronous dynamic random-access memory (SDRAM) https://en.wikipedia.org/wiki/Synchronous_dynamic_random-access_memory
 - Read-only memory (ROM)
+- BCLR (Branch Conditional to Link Register) - This is an instruction, see the ISA
+- Instruction Set Architecture (ISA) - Document containing the description of the instructions
 
 # Notation
 I am using the same notation at the PowerISA.

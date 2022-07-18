@@ -28,7 +28,7 @@ async def test_bf_64b_bclr(dut):
         CIA = NIA
         # Give some time to the Icache to return an instruction
         await Timer(200, units="ps")
-        assert dut.cia.value.integer == CIA, """Internal signal CIA should take 
+        assert dut.cia.value.integer == CIA, """Internal signal CIA should take
                                                             the value from NIA"""
         print("JUMP worked")
         assert dut.o_link_register.value.integer == LR, """Link Register (LK=0) is wrong,
@@ -46,20 +46,25 @@ async def test_bf_64b_bclr(dut):
         BH = random.randint(0, 3)
         tBO = random.randint(0, 7)  # Type for BO
         BO = generate_BO(tBO=tBO, A=A, T=T)
+        old_LR = LR
         LR = expected_LR(LR=LR, CIA=CIA, LK=LK)
         CTR = expected_CTR(CTR=CTR, tBO=tBO)
         # Warning: Always run expected_CTR first
         going_to_branch = False
         if should_branch(tBO=tBO, CR=CR, BI=BI, CTR=CTR):
             going_to_branch = True
-            NIA = expected_branch_target_address(LR)
+            NIA = expected_branch_target_address(old_LR)
+        else:
+            NIA = CIA + 4
 
         # Print information about the current iteration for debugging purpose
         if DEBUG == True:
             print("Sending XL-form Conditional Branch to Link Register:")
+            print(f"\tLR = 0x{old_LR:>x} = 0b{old_LR:>064b}")
+            print(f"\tCIA = 0x{CIA:>x} = 0b{CIA:>064b}")
             print(f"\tCR = 0x{CR:>x} = 0b{CR:>032b}")
             print("\tOP = 19 = 0b010011 (Branch conditional to Link Register XL-form)")
-            print(f"\tBO = 0x{BO:>x} = 0b{BO:>05b} ({str_tBO(tBO)})")
+            print(f"\tBO = 0x{BO:>x} = 0b{BO:>05b} (type: {tBO} - {str_tBO(tBO)})")
             print(f"\tBI = {BI} = 0x{BI:>x} = 0b{BI:>05b}")
             print(f"\tBD = 0x{BH:>x} = 0b{BH:>014b} "
                   f"({str_BH(BH,'bclr')})")
@@ -82,8 +87,7 @@ async def test_bf_64b_bclr(dut):
         dut.i_condition_register.value = CR
         dut.i_target_address_register.value = utils.random_64b()
         await Timer(100, units="ps")  # Give time for the combinatinal logic
-        assert dut.o_next_instr_addr.value.integer == NIA, "NIA should be {}".format(
-            NIA)
+        assert dut.o_next_instr_addr.value.integer == NIA, f"NIA should be {NIA:>x} not {dut.o_next_instr_addr.value.integer:>x}"
 
 
 def str_BH(BH: int, t: str) -> str:
@@ -126,9 +130,13 @@ def str_tBO(tBO: int) -> str:
 
 
 def expected_branch_target_address(LR) -> int:
-    LR_0_61 = f"{LR:>064b}"[0:61]
-    branch_target_address = int(LR_0_61 + "00")
+    LR_0_61 = f"{LR:>064b}"[:62]
+    branch_target_address = int(LR_0_61 + "00", 2)
     # Safety check
+    if branch_target_address != (LR & 0xfffffffffffffffc):
+        print(f"Error: LR=0x{LR:>x}")
+        print(f"One says: {branch_target_address}")
+        print(f"The other: {LR & 0xfffffffffffffffc}")
     assert branch_target_address == (LR & 0xfffffffffffffffc)
     return branch_target_address
 
