@@ -5,7 +5,7 @@ from cocotb.triggers import RisingEdge
 from cocotb.triggers import Timer
 import utils
 import common
-DEBUG = True  # Main switch to turn on/off debugging prints
+DEBUG = False  # Main switch to turn on/off debugging prints
 
 
 @cocotb.test()
@@ -21,12 +21,14 @@ async def test_bf_64b_branch_b(dut):
     for iteration in range(100):
         # Icache load the data at NIA (Next Instruction Address)
         await RisingEdge(dut.i_clk)
-        print("Fake Cache is loading address 0x{:x}".format(NIA))
+        if DEBUG:
+            print("Fake Cache is loading address 0x{:x}".format(NIA))
         CIA = NIA
         # Give some time to the Icache to return an instruction
         await Timer(200, units="ps")
         assert dut.cia.value.integer == CIA, """Internal signal CIA should take the value from NIA"""
-        print("JUMP worked")
+        if DEBUG:
+            print("JUMP worked")
         assert dut.o_link_register.value.integer == LR, """Link Register (LK=0) is wrong, See ISA section 2.4"""
         assert dut.o_count_register.value.integer == CTR
 
@@ -35,6 +37,8 @@ async def test_bf_64b_branch_b(dut):
         T = utils.random_bit()
         tBO = random.randint(0, 7)
         BI = random.randint(0, 2**5-1)
+        # TODO FIXME: If the "decrement and test CTR" options is specified (BO2) the instruction is
+        # invalid
         if tBO == 0:
             # Decrement CTR then branch if CTR[M:63] != 0 and CR[BI] == 0
             BO = utils.random_bin("0000?")
@@ -120,10 +124,13 @@ async def test_bf_64b_branch_b(dut):
             going_to_branch = True
         if going_to_branch:
             NIA = branch_target_address
+        else:
+            NIA = CIA + 4
 
         # Print information about the current iteration for debugging purpose
         if DEBUG == True:
             print("Sending B-form Conditional Branch:")
+            print(f"\tCIA = 0x{CIA:>x} = 0b{CIA:>064b}")
             print(f"\tCR = 0x{CR:>x} = 0b{CR:>032b}")
             print("\tOP = 16 = 0b010000 (Branch conditional B-form)")
             print(f"\tBO = 0x{BO:>x} = 0b{BO:>05b} ({str_tBO(tBO)})")
@@ -148,8 +155,7 @@ async def test_bf_64b_branch_b(dut):
         dut.i_condition_register.value = CR
         dut.i_target_address_register.value = utils.random_64b()
         await Timer(100, units="ps")  # Give time for the combinatinal logic
-        assert dut.o_next_instr_addr.value.integer == NIA, "NIA should be {}".format(
-            NIA)
+        assert dut.o_next_instr_addr.value.integer == NIA, f"NIA should be 0x{NIA:>x} not 0x{dut.o_next_instr_addr.value.integer:>x}"
 
 
 def str_AA(AA):
@@ -196,3 +202,6 @@ def str_tBO(tBO):
 # undefined
 # TODO Try a prefixed instruction at address 2**64-8 -> next seq. instr. is
 # undefined
+
+
+# TODO Improve coverage of CTR==0

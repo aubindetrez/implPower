@@ -5,7 +5,7 @@ from cocotb.triggers import RisingEdge
 from cocotb.triggers import Timer
 import utils
 import common
-DEBUG = True  # Main switch to turn on/off debugging prints
+DEBUG = False  # Main switch to turn on/off debugging prints
 
 
 @cocotb.test()
@@ -24,13 +24,15 @@ async def test_bf_64b_bclr(dut):
     for iteration in range(100):
         # Icache load the data at NIA (Next Instruction Address)
         await RisingEdge(dut.i_clk)
-        print("Fake Cache is loading address 0x{:x}".format(NIA))
+        if DEBUG:
+            print("Fake Cache is loading address 0x{:x}".format(NIA))
         CIA = NIA
         # Give some time to the Icache to return an instruction
         await Timer(200, units="ps")
         assert dut.cia.value.integer == CIA, """Internal signal CIA should take
                                                             the value from NIA"""
-        print("JUMP worked")
+        if DEBUG:
+            print("JUMP worked")
         assert dut.o_link_register.value.integer == LR, """Link Register (LK=0) is wrong,
                                                             See ISA section 2.4"""
         assert dut.o_count_register.value.integer == CTR
@@ -64,7 +66,8 @@ async def test_bf_64b_bclr(dut):
             print(f"\tCIA = 0x{CIA:>x} = 0b{CIA:>064b}")
             print(f"\tCR = 0x{CR:>x} = 0b{CR:>032b}")
             print("\tOP = 19 = 0b010011 (Branch conditional to Link Register XL-form)")
-            print(f"\tBO = 0x{BO:>x} = 0b{BO:>05b} (type: {tBO} - {str_tBO(tBO)})")
+            print(
+                f"\tBO = 0x{BO:>x} = 0b{BO:>05b} (type: {tBO} - {str_tBO(tBO)})")
             print(f"\tBI = {BI} = 0x{BI:>x} = 0b{BI:>05b}")
             print(f"\tBD = 0x{BH:>x} = 0b{BH:>014b} "
                   f"({str_BH(BH,'bclr')})")
@@ -219,3 +222,5 @@ def generate_BO(tBO, A, T) -> int:
         return 0b10010 | A << 3 | T
     else:
         return utils.random_bin("1?1??")  # Branch always
+
+# TODO Improve coverage of CTR==0

@@ -126,14 +126,12 @@ module BranchFacility (
             nia = exts_bd;
             // TODO high order 32bits set to 0 in 32 bit mode
           end
-        end else nia = cia;  // Branch is not taken
+        end else nia = cia + 4;  // Branch is not taken: sequential instructions
     end else if (i_cond_LR == 1'b1) begin
         if (branch_taken == 1'b1) begin
             nia = a_lr_q; // LR register, shifted and sign extended
             // TODO high order 32bits set to 0 in 32 bit mode
-        end else begin
-            nia = cia + 4;  // sequential instructions
-        end
+        end else nia = cia + 4;  // Branch is not taken: sequential instructions
     end
       // TODO Other kind of branch
     end else begin  // Not a branch
