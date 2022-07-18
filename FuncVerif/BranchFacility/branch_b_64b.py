@@ -37,8 +37,6 @@ async def test_bf_64b_branch_b(dut):
         T = utils.random_bit()
         tBO = random.randint(0, 7)
         BI = random.randint(0, 2**5-1)
-        # TODO FIXME: If the "decrement and test CTR" options is specified (BO2) the instruction is
-        # invalid
         if tBO == 0:
             # Decrement CTR then branch if CTR[M:63] != 0 and CR[BI] == 0
             BO = utils.random_bin("0000?")
