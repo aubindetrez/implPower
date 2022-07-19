@@ -14,8 +14,24 @@ Please read the OpenPower Power ISA End User License Agreement (In the Open Powe
 
 ## Status
 This is a work in progress, no working prototype yet but let me know if you are
-interrested (just open a friendly issue ;) ).
+interrested (just open a friendly github issue ;) ).
 
+Here are the phases of the project.
+- [ ] Vanilla Design/Initial ISA reading: Go through the ISA, make an initial draft. Functinal verification (and formal if needed) is mandatory - instrumentation is optional. (1) [Start: 07/2022]
+- [ ] Define some specifications/objectives
+- [ ] **Concept**: Document a new micro architecture concept (define units and interfaces) (1)
+- [ ] Unit-concept: Document unit micro architectures (1)
+- [ ] Optional: write performance model using SystemC like technology
+- [ ] **Verification**: Write functional and formal verification with coverage collection for each unit.
+- [ ] **Design**: Use the draft's verification code to provide an initial functional coverage and use. (1)
+- [ ] Integration: Instrument the design and plug everything together. (1)
+- [ ] System verification: Write verification code to drive the entire system and perform sanity checks (1)
+- [ ] FPGA testing
+- [ ] Final Timing, performance and power analysis. (SKY130 technology?)
+
+1: Static Timing analysis and physical design involved (OpenLane)
+
+We will document each phase/step (especially how good we verified the design).
 ## The Power ISA
 For more information about the Power ISA see the Wikipedia page: https://en.wikipedia.org/wiki/Power_ISA
 
@@ -70,6 +86,7 @@ TODO
 If you are just starting you journey to hardware here are some resources just
 for you: (May be outdated, I don't plan to maintaining this list)
 - Writing python scripts
+- How to read/write timing diagrams
 - Computer architecture (Computer Architecture: A Quantitative Approach by John L. Hennessy, David A. Patterson, Krste Asanovi)
 - Basic SystemVerilog/Verilog RTL design http://www.asic-world.com/verilog/veritut.html
 - Logical effort http://bwrcs.eecs.berkeley.edu/Classes/icdesign/ee141_f05/Lectures/Notes/ComputingLogicalEffort.pdf
@@ -81,6 +98,8 @@ for you: (May be outdated, I don't plan to maintaining this list)
 - What subset of SystemVerilog is synthesizable.
 - How do we initialize registers and bringup a chip in a known state
 - Clock Gating / Data Gating
+- What is equivalence checking (yosys).
+
 
 How to contribute:
 - Create a directory and write a testbench in [FuncVerif/](FuncVerif/)
