@@ -28,8 +28,8 @@ module BranchFacility (
 
     // Debug and Error
     output logic err_branch_on_stall,  // we should not get a new instruction to process on a stall
-    output logic dbg_invalid_instruction, // Debug: the instruction is invalid
-    output logic dbg_unknown_branch // Debug: Cannot identify the instruction
+    output logic dbg_invalid_instruction,  // Debug: the instruction is invalid
+    output logic dbg_unknown_branch  // Debug: Cannot identify the instruction
 );
   logic boot;  // Set after reset to make sure we start with address 0
   always_ff @(posedge i_clk or posedge i_rst) begin
@@ -62,7 +62,7 @@ module BranchFacility (
   logic ctr_d_null;
   assign ctr_d_null = (ctr_d == 64'b0) ? 1 : 0;
   logic a_ctr_q;
-  assign a_ctr_q = {ctr_q[0:61], 2'b00};// aligned
+  assign a_ctr_q = {ctr_q[0:61], 2'b00};  // aligned
 
   // For Branch Conditional B-form, specifies the CTR bit to be tested
   logic [0:4] bi;
@@ -86,8 +86,8 @@ module BranchFacility (
   logic [0:63] exts_li;  // Sign extended LI
   assign exts_li = {{38{li[0]}}, li};  // LI[0] is the MSB (and the sign)
 
-  logic [0:63] a_lr_q; // The LR register aligned
-  assign a_lr_q = {lr_q[0:61], 2'b00}; // aligned
+  logic [0:63] a_lr_q;  // The LR register aligned
+  assign a_lr_q = {lr_q[0:61], 2'b00};  // aligned
 
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
   assign aa = i_instr[30];
@@ -119,40 +119,41 @@ module BranchFacility (
   // TODO high order 32bits set to 0 in 32 bit mode
   always_comb begin
     if (i_en == 1'b1) begin  // This is a branch
-        if (i_i_form == 1'b1) begin
-            if (aa == 1'b0) begin
-            // TODO Reuse the 64b adder (and check if the synthesis does
-            // a good job)
-            nia = exts_li + cia;  // CIA = address of the current instruction
+      if (i_i_form == 1'b1) begin
+        if (aa == 1'b0) begin
+          // TODO Reuse the 64b adder (and check if the synthesis does
+          // a good job)
+          nia = exts_li + cia;  // CIA = address of the current instruction
+          // TODO high order 32bits set to 0 in 32 bit mode
+        end else begin
+          nia = exts_li;
+          // TODO high order 32bits set to 0 in 32 bit mode
+        end
+      end else if (i_b_form == 1'b1) begin
+        if (branch_taken == 1'b1) begin
+          if (aa == 1'b0) begin
+            nia = exts_bd + cia;
             // TODO high order 32bits set to 0 in 32 bit mode
-            end else begin
-            nia = exts_li;
+          end else begin
+            nia = exts_bd;
             // TODO high order 32bits set to 0 in 32 bit mode
-            end
-        end else if (i_b_form == 1'b1) begin
-            if (branch_taken == 1'b1) begin
-                if (aa == 1'b0) begin
-                    nia = exts_bd + cia;
-                    // TODO high order 32bits set to 0 in 32 bit mode
-                end else begin
-                    nia = exts_bd;
-                    // TODO high order 32bits set to 0 in 32 bit mode
-                end
-            end else nia = cia + 4;  // Branch is not taken: sequential instructions
-        end else if (i_cond_LR == 1'b1) begin
-            if (branch_taken == 1'b1) begin
-                nia = a_lr_q; // LR register, shifted and sign extended
-                // TODO high order 32bits set to 0 in 32 bit mode
-            end else nia = cia + 4;  // Branch is not taken: sequential instructions
-        end else if (i_cond_CTR == 1'b1) begin
-            if (invalid_bcctr_form == 1'b1) nia = cia + 4; // TODO (1) branch to custom error recovery handler
-            
-            else if (branch_taken == 1'b1) nia = a_ctr_q;
-            else nia = cia + 4;
-        end else if (i_cond_TAR == 1'b1) begin
-            // TODO
-            nia = cia + 4;
-        end else nia = cia + 4; // Also raises (2)
+          end
+        end else nia = cia + 4;  // Branch is not taken: sequential instructions
+      end else if (i_cond_LR == 1'b1) begin
+        if (branch_taken == 1'b1) begin
+          nia = a_lr_q;  // LR register, shifted and sign extended
+          // TODO high order 32bits set to 0 in 32 bit mode
+        end else nia = cia + 4;  // Branch is not taken: sequential instructions
+      end else if (i_cond_CTR == 1'b1) begin
+        if (invalid_bcctr_form == 1'b1)
+          nia = cia + 4;  // TODO (1) branch to custom error recovery handler
+
+        else if (branch_taken == 1'b1) nia = a_ctr_q;
+        else nia = cia + 4;
+      end else if (i_cond_TAR == 1'b1) begin
+        // TODO
+        nia = cia + 4;
+      end else nia = cia + 4;  // Also raises (2)
     end else begin  // Not a branch
       if (boot == 1'b1) nia = cia;
       else nia = cia + 4;  // sequential instructions
