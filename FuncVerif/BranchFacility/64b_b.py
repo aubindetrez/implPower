@@ -9,7 +9,7 @@ DEBUG = False  # Main switch to turn on/off debugging prints
 
 
 @cocotb.test()
-async def test_bf_64b_branch_b(dut):
+async def test_bf_64b_b(dut):
     """ Test branch facility for Branch Conditional B-form / 64bit mode """
     await common.init_sequence(dut, mode=64)
     NIA = 0

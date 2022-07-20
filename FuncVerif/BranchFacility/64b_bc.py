@@ -9,7 +9,7 @@ DEBUG = False  # Main switch to turn on/off debugging prints
 
 
 @cocotb.test()
-async def test_bf_64b_branh_i(dut):
+async def test_bf_64b_bc(dut):
     """ Test branch facility for Branch I-form / 64bit mode """
     await common.init_sequence(dut, mode=64)
     assert dut.o_next_instr_addr.value.integer == 0, "First address should be 0"
