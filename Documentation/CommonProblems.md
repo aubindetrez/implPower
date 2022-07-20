@@ -16,4 +16,4 @@
   everything is in one directory [Documentation/](Documentation/) (+ the main [README.md](README.md))
 - Shell: When doing `find a_directory/ -name "*.sv"` do not forget the `"`
 - Python: when using `int("0000100101", 2)` forget about the `, 2` (default is decimal)
-
+- When writing a 'Draft' SV design: Interfaces/signals change all the time and it is hard to keep verification in sync with the design 
