@@ -34,7 +34,7 @@ async def test_bf_64b_bcctr(dut):
         if DEBUG:
             print("JUMP worked")
         assert dut.o_link_register.value.integer == ref.LR
-        assert dut.o_count_register.value.integer == ref.CTR
+        assert dut.o_count_register.value.integer == ref.CTR  # Should be modified
 
         # Conditional Register, see Section 2.3.1 -> CR[32:63]
         CR = utils.random_32b()
@@ -46,19 +46,27 @@ async def test_bf_64b_bcctr(dut):
         BH = random.randint(0, 3)
         tBO = random.randint(0, 7)  # Type for BO
         BO = generate_BO_bcctr(tBO=tBO, A=A, T=T)
+        CTR = utils.random_64b()
 
         # If the decrement and test CTR option is specified (BO2=0) the instruction
         # form is invalid
         invalid_instruction = utils.select_bit(reg=BO, size=5, bit=2) == 0
-
-        LR = expected_LR(LR=LR, CIA=CIA, LK=LK)
-        CTR = utils.random_64b()
+        if not invalid_instruction:
+            # TODO (1) ISA doesn't say what to do -> Ignore the instruction for now
+            LR = expected_LR(LR=LR, CIA=CIA, LK=LK)
         going_to_branch = False
-        if should_branch(tBO=tBO, CR=CR, BI=BI, CTR=CTR):
-            going_to_branch = True
-            NIA = expected_branch_target_address(CTR=CTR)
-        else:
+        if invalid_instruction:
+            # Power ISA section 1.8.2
+            # Either: call system illegal instruction error handler to simply
+            # give undefined result
+            # TODO (1) ISA doesn't say what to do -> Ignore the instruction for now
             NIA = CIA + 4
+        else:
+            if invalid_instruction and should_branch(tBO=tBO, CR=CR, BI=BI, CTR=CTR):
+                going_to_branch = True
+                NIA = expected_branch_target_address(CTR=CTR)
+            else:
+                NIA = CIA + 4
 
         # Print information about the current iteration for debugging purpose
         if DEBUG == True:
@@ -72,13 +80,14 @@ async def test_bf_64b_bcctr(dut):
             print(f"\tBD = 0x{BH:>x} = 0b{BH:>014b} "
                   f"({str_BH(BH,'bclr')})")
             print(f"\tLK = {LK}")
+            print(f"Expected invalid instruction: {invalid_instruction}")
             print(f"Expected to branch: {going_to_branch}")
             print(f"Expected NIA: 0x{NIA:>x} = 0b{NIA:>064b}")
             print(f"Expected LR: 0x{LR:>x} = 0b{LR:>064b}")
             print(f"Expected CTR: 0x{CTR:>x} = 0b{CTR:>064b}")
 
         dut.i_instr.value = int(utils.branch_xl_form_to_string(
-            PO=19, BO=BO, BI=BI, BH=BH, XO=528, LK=LK)[:32], 2)
+            PO=528, BO=BO, BI=BI, BH=BH, XO=528, LK=LK)[:32], 2)
         dut.i_stall.value = 0b0  # No stall
         dut.i_en.value = 0b1  # This is a branch
         dut.i_i_form.value = 0b0
@@ -91,6 +100,7 @@ async def test_bf_64b_bcctr(dut):
         dut.i_target_address_register.value = utils.random_64b()
         await Timer(100, units="ps")  # Give time for the combinatinal logic
         assert dut.o_next_instr_addr.value.integer == NIA, f"NIA should be {NIA:>x} not {dut.o_next_instr_addr.value.integer:>x}"
+        assert dut.dgb_invalid_instruction == invalid_instruction
 
 
 def expected_branch_target_address(CTR: int) -> int:
