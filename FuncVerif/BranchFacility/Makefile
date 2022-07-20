@@ -2,7 +2,7 @@ export COCOTB_REDUCED_LOG_FMT=1
 export SIM = icarus
 export TOPLEVEL_LANG = verilog
 export TOPLEVEL = BranchFacility
-export MODULE = 64b_b,64b_bc,64b_bclr,64b_bcctr
+export MODULE = 64b_b,64b_bc,64b_bclr,64b_bcctr,64b_bctar
 export VERILOG_SOURCES = $(shell pwd)/$(TOPLEVEL).v
 export SVERILOG_SOURCES = $(shell pwd)/../../Logic/$(TOPLEVEL).sv
 

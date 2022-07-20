@@ -51,7 +51,7 @@ module BranchFacility (
   assign err_branch_on_stall = i_stall & i_en;
 
   logic decr_ctr;  // 1'b1 if ctr need to be decremented
-  assign decr_ctr = ~bo[2] & (i_b_form | i_cond_LR);  // See ISA Section 2.4
+  assign decr_ctr = ~bo[2] & (i_b_form | i_cond_LR | i_cond_TAR);  // See ISA Section 2.4
   logic [0:63] ctr_d, ctr_q;  // Count Register
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) ctr_q <= 64'b0;
@@ -88,6 +88,9 @@ module BranchFacility (
 
   logic [0:63] a_lr_q;  // The LR register aligned
   assign a_lr_q = {lr_q[0:61], 2'b00};  // aligned
+
+  logic [0:63] a_tar;  // The TAR register aligned
+  assign a_tar = {i_target_address_register[0:61], 2'b00};
 
   logic aa;  // AA field in a Branch instruction (all forms) see Section 2.4
   assign aa = i_instr[30];
@@ -141,18 +144,17 @@ module BranchFacility (
         end else nia = cia + 4;  // Branch is not taken: sequential instructions
       end else if (i_cond_LR == 1'b1) begin
         if (branch_taken == 1'b1) begin
-          nia = a_lr_q;  // LR register, shifted and sign extended
+          nia = a_lr_q;  // LR register, aligned
           // TODO high order 32bits set to 0 in 32 bit mode
         end else nia = cia + 4;  // Branch is not taken: sequential instructions
       end else if (i_cond_CTR == 1'b1) begin
         if (invalid_bcctr_form == 1'b1)
           nia = cia + 4;  // TODO (1) branch to custom error recovery handler
-
         else if (branch_taken == 1'b1) nia = a_ctr_q;
         else nia = cia + 4;
       end else if (i_cond_TAR == 1'b1) begin
-        // TODO
-        nia = cia + 4;
+        if (branch_taken == 1'b1) nia = a_tar;  // TAR register, aligned
+        else nia = cia + 4;  // Branch is not taken: sequential instructions
       end else nia = cia + 4;  // Also raises (2)
     end else begin  // Not a branch
       if (boot == 1'b1) nia = cia;
