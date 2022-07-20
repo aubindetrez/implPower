@@ -47,13 +47,13 @@ async def test_bf_64b_bclr(dut):
         # BH: Target address prediction, See Power ISA Section 2.4 Figure 42
         BH = random.randint(0, 3)
         tBO = random.randint(0, 7)  # Type for BO
-        BO = generate_BO(tBO=tBO, A=A, T=T)
+        BO = common.generate_BO(tBO=tBO, A=A, T=T)
         old_LR = LR
         LR = expected_LR(LR=LR, CIA=CIA, LK=LK)
         CTR = expected_CTR(CTR=CTR, tBO=tBO)
         # Warning: Always run expected_CTR first
         going_to_branch = False
-        if should_branch(tBO=tBO, CR=CR, BI=BI, CTR=CTR):
+        if common.should_branch(tBO=tBO, CR=CR, BI=BI, CTR=CTR):
             going_to_branch = True
             NIA = expected_branch_target_address(old_LR)
         else:
@@ -67,10 +67,10 @@ async def test_bf_64b_bclr(dut):
             print(f"\tCR = 0x{CR:>x} = 0b{CR:>032b}")
             print("\tOP = 19 = 0b010011 (Branch conditional to Link Register XL-form)")
             print(
-                f"\tBO = 0x{BO:>x} = 0b{BO:>05b} (type: {tBO} - {str_tBO(tBO)})")
+                f"\tBO = 0x{BO:>x} = 0b{BO:>05b} (type: {tBO} - {common.str_tBO(tBO)})")
             print(f"\tBI = {BI} = 0x{BI:>x} = 0b{BI:>05b}")
             print(f"\tBD = 0x{BH:>x} = 0b{BH:>014b} "
-                  f"({str_BH(BH,'bclr')})")
+                  f"({common.str_BH(BH,'bclr')})")
             print(f"\tLK = {LK}")
             print(f"Expected to branch: {going_to_branch}")
             print(f"Expected NIA: 0x{NIA:>x} = 0b{NIA:>064b}")
@@ -91,45 +91,6 @@ async def test_bf_64b_bclr(dut):
         dut.i_target_address_register.value = utils.random_64b()
         await Timer(100, units="ps")  # Give time for the combinatinal logic
         assert dut.o_next_instr_addr.value.integer == NIA, f"NIA should be {NIA:>x} not {dut.o_next_instr_addr.value.integer:>x}"
-
-
-def str_BH(BH: int, t: str) -> str:
-    """
-    t can be "bclr" "bcctr" "bctar"
-    """
-    if BH == 0b00 and t == "bclr":
-        return "The instruction is a subroutine return"
-    elif BH == 0b00 and (t == "bcctr" or t == "bctar"):
-        return "Target address is likely to be the same as the last time the branch was taken"
-    elif BH == 0b01 and t == "bclr":
-        return "Target address is likely to be the same as the last time the branch was taken"
-    elif BH == 0b01 and (t == "bcctr" or t == "bctar"):
-        return "Reserved"
-    elif BH == 0b11:
-        return "Target address is not predictable"
-    else:
-        return "Error"
-
-
-def str_tBO(tBO: int) -> str:
-    if tBO == 0:
-        return "Decrement CTR; Branch if CTR!=0 and CR[BI]=0"
-    elif tBO == 1:
-        return "Decrement CTR; Branch if CTR=0 and CR[BI]=0"
-    elif tBO == 2:
-        return "Branch if CR[BI]=0"
-    elif tBO == 3:
-        return "Decrement CTR; Branch if CTR!=0 and CR[BI]=1"
-    elif tBO == 4:
-        return "Decrement CTR; Branch if CTR=0 and CR[BI]=1"
-    elif tBO == 5:
-        return "Branch if CR[BI]!=0"
-    elif tBO == 6:
-        return "Decrement CTR; Branch if CTR!=0"
-    elif tBO == 7:
-        return "Decrement CTR; Branch if CTR=0"
-    else:
-        return "Always Branch"
 
 
 def expected_branch_target_address(LR) -> int:
@@ -170,57 +131,5 @@ def expected_LR(LR, CIA, LK):
     if LK == 1:
         return CIA+4  # Effective address of the instruction following the Branch Instruction
     return LR
-
-
-def should_branch(tBO, CR, BI, CTR) -> bool:
-    if tBO == 0:
-        return utils.select_bit(
-            reg=CR, size=32, bit=BI) == 0 and CTR != 0  # CTR[0:63]
-    elif tBO == 1:
-        return utils.select_bit(
-            reg=CR, size=32, bit=BI) == 0 and CTR == 0
-    elif tBO == 2:
-        return utils.select_bit(reg=CR, size=32, bit=BI) == 0
-    elif tBO == 3:
-        return utils.select_bit(
-            reg=CR, size=32, bit=BI) == 1 and CTR != 0
-    elif tBO == 4:
-        return utils.select_bit(
-            reg=CR, size=32, bit=BI) == 1 and CTR == 0
-    elif tBO == 5:
-        return utils.select_bit(reg=CR, size=32, bit=BI) == 1
-    elif tBO == 6:
-        return CTR != 0
-    elif tBO == 7:
-        return CTR == 0
-    else:
-        return True
-
-
-def generate_BO(tBO, A, T) -> int:
-    if tBO == 0:
-        # Decrement CTR then branch if CTR[M:63] != 0 and CR[BI] == 0
-        return utils.random_bin("0000?")
-    elif tBO == 1:
-        # Decrement the CTR then branch if CTR[M:63] == 0 and CR[BI] == 0
-        return utils.random_bin("0001?")
-    elif tBO == 2:
-        return 0b00100 | A << 1 | T  # Branch if CR[BI] == 0
-    elif tBO == 3:
-        # Decrement the CTR, then branch if CTR[M:63] != 0 and CR[BI] == 1
-        return utils.random_bin("0100?")
-    elif tBO == 4:
-        # Decrement the CTR, then branch if CTR[M:63] == 0 and CR[BI] == 1
-        return utils.random_bin("0101?")
-    elif tBO == 5:
-        return 0b01100 | A << 1 | T  # Branch if CR[BI] == 1
-    elif tBO == 6:
-        # Decrement the CTR, then branch if CTR[M:63] != 0
-        return 0b10000 | A << 3 | T
-    elif tBO == 7:
-        # Decrement the CTR, then branch if CTR[M:63] == 0
-        return 0b10010 | A << 3 | T
-    else:
-        return utils.random_bin("1?1??")  # Branch always
 
 # TODO Improve coverage of CTR==0
