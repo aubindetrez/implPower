@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal Identify.sv
+prep -top Identify
+
+[files]
+Identify.sv
