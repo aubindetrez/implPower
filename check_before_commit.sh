@@ -70,9 +70,25 @@ do echo ">>> Running Linter on $file"
     fi
 done
 
-# Run all Functional tests by calling "make" in every directories in FuncVerif/
+# Run all Functional tests by executing test.sh in every directories in FuncVerif/
 for dir in FuncVerif/*
 do echo ">>> Running Functional tests for $dir"
+    cd $dir
+    ./test.sh
+    if ! [ $? -eq 0 ]
+    then
+        echo ">>> Verification failed while testing $dir"
+        echo ">>> Please fix it and try again"
+        echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+        exit 1
+    fi
+    ./clean.sh
+    cd $gitroot
+done
+
+# Run all Formal tests by executing test.sh in every directories in FormalVerif/
+for dir in FormalVerif/*
+do echo ">>> Running Formal tests for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
