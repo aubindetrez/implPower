@@ -76,6 +76,7 @@
 - Read-only memory (ROM)
 - BCLR (Branch Conditional to Link Register) - This is an instruction, see the ISA
 - Instruction Set Architecture (ISA) - Document containing the description of the instructions
+- BRanch Unit (BRU)
 
 # Notation
 I am using the same notation at the PowerISA.

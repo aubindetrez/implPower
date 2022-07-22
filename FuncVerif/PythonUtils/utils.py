@@ -140,6 +140,20 @@ def branch_xl_form_to_string(PO, BO, BI, BH, XO, LK):
     assert len(result) == 32
     return result + 32*"0"  # Big Endian
 
+def condreg_xl_form_to_string(PO, BT, BA, BB, XO):
+    """
+   |0 ---|6 ---|11 ---|16 ---|21 --- | 31
+   |  PO |  BT |  BA  |  BB  |   XO  | 0
+    """
+    PO_str = int_to_bin(6, PO) # 6
+    BT_str = int_to_bin(5, BT) # 6+5=11
+    BA_str = int_to_bin(5, BA) # +5=16
+    BB_str = int_to_bin(5, BB) # 5 = 21
+    XO_str = int_to_bin(10, XO) # +10 = 31
+    result = PO_str + BT_str + BA_str + BB_str + XO_str + "0"
+    assert len(result) == 32
+    return result + 32*"0"  # Big Endian
+
 
 def BE(num: int, length: int) -> int:
     """ Little Endian / Big Endian """
@@ -167,7 +181,10 @@ class TestPythonUtils(unittest.TestCase):
         # 010011 00111 00100 010  10  0000010110  1
         self.assertEqual(branch_xl_form_to_string(PO=19, BO=7, BI=4, BH=0b10, XO=0x16, LK=1),
                          "01001100111001000001000000101101"+32*"0")
-
+    def test_condreg_xl_form(self):
+        self.assertEqual(condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6, XO=257),
+                "01001100111000110011001000000010"+32*"0")
+        self.assertEqual(len(condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6, XO=257)), 64)
     def test_exts(self):
         self.assertEqual(exts(0b11, 3, 6), 0b000011)
         self.assertEqual(exts(0b100, 3, 6), 0b111100)
