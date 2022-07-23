@@ -17,6 +17,17 @@ def select_bit(reg: int, size: int, bit: int) -> int:
     s = fmt.format(reg)
     return int(s[bit])
 
+def select_bits(reg: int, size: int, from_: int, to: int) -> int:
+    """
+    >>> select_bits(reg=0b110101, size=6, from_=3, to=5)
+    5
+    >>> select_bits(reg=0b110000, size=6, from_=0, to=1)
+    3
+    """
+    fmt = "{:0"+str(size)+"b}"
+    s = fmt.format(reg)
+    return int(s[from_:to+1], 2)
+
 
 def adds_64b(a: int, b: int) -> int:
     """

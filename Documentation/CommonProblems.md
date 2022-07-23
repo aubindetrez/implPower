@@ -17,3 +17,6 @@
 - Shell: When doing `find a_directory/ -name "*.sv"` do not forget the `"`
 - Python: when using `int("0000100101", 2)` forget about the `, 2` (default is decimal)
 - When writing a 'Draft' SV design: Interfaces/signals change all the time and it is hard to keep verification in sync with the design 
+- SystemVerilog if you do `logic a; assign a = something[0:31];` there is no error, even if it is
+  obviously wrong
+- Python: having "Unused function..." warning would be able to catch copy/paste typos

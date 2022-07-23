@@ -21,18 +21,18 @@ module Identify (
     output logic o_bru_cond_LR,  // if o_bru_en is set, indication the BU what form is the instr.
     output logic o_bru_cond_CTR,  // if o_bru_en is set, indication the BU what form is the instr.
     output logic o_bru_cond_TAR,  // if o_bru_en is set, indication the BU what form is the instr.
-    
-    output logic o_condreg_en, // i_instr is a condition register Instruction
-    output logic [0:31] o_condreg_instr, // output instruction to the CondReg Unit
-    output logic o_condreg_crand, // Instruction is a Condition Register AND
-    output logic o_condreg_crnand, // Instruction is a Condition Register NAND
-    output logic o_condreg_cror, // Instruction is a Conditon Register OR
-    output logic o_condreg_crxor, // Instruction is a Condition Register XOR
-    output logic o_condreg_crnor, // Instruction is a Condition Register NOR
-    output logic o_condreg_creqv, // Instruction is a Condition Register Equivalent
-    output logic o_condreg_crandc, // Instruction is a Condition Register AND with Complement
-    output logic o_condreg_crorc, // Instruction is a Conditon Register OR with Complement
-    output logic o_condreg_mcrf // Instruction is a Move Conditoin Register Field
+
+    output logic o_condreg_en,  // i_instr is a condition register Instruction
+    output logic [0:31] o_condreg_instr,  // output instruction to the CondReg Unit
+    output logic o_condreg_crand,  // Instruction is a Condition Register AND
+    output logic o_condreg_crnand,  // Instruction is a Condition Register NAND
+    output logic o_condreg_cror,  // Instruction is a Conditon Register OR
+    output logic o_condreg_crxor,  // Instruction is a Condition Register XOR
+    output logic o_condreg_crnor,  // Instruction is a Condition Register NOR
+    output logic o_condreg_creqv,  // Instruction is a Condition Register Equivalent
+    output logic o_condreg_crandc,  // Instruction is a Condition Register AND with Complement
+    output logic o_condreg_crorc,  // Instruction is a Conditon Register OR with Complement
+    output logic o_condreg_mcrf  // Instruction is a Move Conditoin Register Field
 );
   logic is_prefixed;
   logic [0:5] primary_opcode;
@@ -49,9 +49,9 @@ module Identify (
   logic is_branch_cond_to_LR;  // Conditional branch to Link Register, Section 2.4
   logic is_branch_cond_to_CTR;  // Conditional branch to Count Register, Section 2.4
   logic is_branch_cond_to_TAR;  // Conditional branch to Target Address Register, Section 2.4
-  assign is_branch_i_form = (primary_opcode == 6'b010010) ? 1'b1 : 1'b0; // Decimal: 18
-  assign is_branch_b_form = (primary_opcode == 6'b010000) ? 1'b1 : 1'b0; // Decimal: 16
-  assign is_branch_xl_form = (primary_opcode == 6'b010011) ? 1'b1 : 1'b0; // Decimal: 19
+  assign is_branch_i_form = (primary_opcode == 6'b010010) ? 1'b1 : 1'b0;  // Decimal: 18
+  assign is_branch_b_form = (primary_opcode == 6'b010000) ? 1'b1 : 1'b0;  // Decimal: 16
+  assign is_branch_xl_form = (primary_opcode == 6'b010011) ? 1'b1 : 1'b0;  // Decimal: 19
   // According to Section 2.4, bits [21, 31] = 16 = 0x10 = 0b00_0001_0000
   assign is_branch_cond_to_LR = (is_branch_xl_form == 1'b1
                                     && i_instr[21:30] == 10'b0000010000)? 1'b1: 1'b0;
@@ -96,18 +96,21 @@ module Identify (
                                 && i_instr[21:30] == 10'b00_0000_0000)? 1'b1: 1'b0; // Decimal 0
 
 `ifdef FORMAL
-    always @(posedge i_clk) begin
-        // Making sure an instruction is not identified both as Conditional Register and as Branch
-        if (o_condreg_en == 1'b1) assert (o_bru_en == 1'b0);
+  always @(posedge i_clk) begin
+    // Making sure an instruction is not identified both as Conditional Register and as Branch
+    if (o_condreg_en == 1'b1) assert (o_bru_en == 1'b0);
 
-        // Unique instruction is detected
-        if (o_condreg_en == 1'b1) assert (o_condreg_crand + o_condreg_crnand + o_condreg_cror
+    // Unique instruction is detected
+    if (o_condreg_en == 1'b1)
+      assert (o_condreg_crand + o_condreg_crnand + o_condreg_cror
                                           + o_condreg_crxor + o_condreg_crnor + o_condreg_creqv
-                                          + o_condreg_crandc+ o_condreg_crorc + o_condreg_mcrf == 1);
-        // Unique instruction is detected
-        if (o_bru_en == 1'b1) assert(is_branch_i_form + is_branch_b_form + is_branch_cond_to_LR
+                                          + o_condreg_crandc+ o_condreg_crorc
+                                          + o_condreg_mcrf == 1);
+    // Unique instruction is detected
+    if (o_bru_en == 1'b1)
+      assert(is_branch_i_form + is_branch_b_form + is_branch_cond_to_LR
                                           + is_branch_cond_to_CTR + is_branch_cond_to_TAR == 1);
-    end
+  end
 `endif
 
   initial begin
