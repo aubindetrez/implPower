@@ -17,7 +17,6 @@ module CondReg (
     output logic [0:31] o_cr  // Condition Register (CR)
 );
 
-  // TODO Formal: assume i_crand + i_crnand + ... <= 0
   logic [0:31] cr_d, cr_q;
   always_ff @(posedge i_clk or posedge i_rst) begin
     if (i_rst == 1'b1) cr_q <= 32'b0;
@@ -42,7 +41,7 @@ module CondReg (
                     (i_creqv == 1'b1)? ~(cr_q[ba] ^ cr_q[bb]) :
                     (i_crandc == 1'b1)? cr_q[ba] & ~cr_q[bb] :
                     (i_crorc == 1'b1)? cr_q[ba] | ~cr_q[bb]:
-                    0; // Default: i_en is 0 -> cr_d will not update cr_q
+                    cr_q[bt]; // Default: Do not modify any bit
 
   logic [0:31] int_cr;
   genvar i;
@@ -68,6 +67,7 @@ module CondReg (
   //assign cr_d[6] = (i_mcrf == 1'b1 && bf == 1)? int_cr[bfa*4+2]: int_cr[6];
   //assign cr_d[7] = (i_mcrf == 1'b1 && bf == 1)? int_cr[bfa*4+3]: int_cr[7];
   // [...]
+
   genvar i;
   for (i = 0; i < 32; i++) begin : gen_mcrf
     assign cr_d[i] = (i_mcrf == 1'b1 && bf == i / 4) ? int_cr[bfa_sht+i%4] : int_cr[i];

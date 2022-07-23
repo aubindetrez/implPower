@@ -4,7 +4,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import RisingEdge
 from cocotb.triggers import Timer
 import utils
-DEBUG = True  # Main switch to turn on/off debugging prints
+DEBUG = False  # Main switch to turn on/off debugging prints
 
 
 @cocotb.test()
@@ -29,7 +29,7 @@ async def test_condReg(dut):
 
     #output logic [0:31] o_cr // Condition Register (CR)
     #await Timer(200, units="ps")  # reset counters
-    for i in range(100):
+    for i in range(1000):
         await RisingEdge(dut.i_clk)
         await Timer(200, units="ps")
         if DEBUG: print(f"DUT's CR:   0b{dut.o_cr.value.integer:>032b}")
