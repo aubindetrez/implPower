@@ -86,15 +86,16 @@ module CondReg (
   always @(posedge i_clk) f_past_valid <= 1'b1;
 
   always @(posedge i_clk) begin
-      assume (i_rst == 1'b0);
-      if (i_en == 1'b1) begin
-          // Making sure 'mcrf BF, BFA' with BF == BFA will not change CR
-          assume (i_crand + i_crnand + i_cror + i_crxor + i_crnor
+    assume (i_rst == 1'b0);
+    if (i_en == 1'b1) begin
+      // Making sure 'mcrf BF, BFA' with BF == BFA will not change CR
+      assume (i_crand + i_crnand + i_cror + i_crxor + i_crnor
                                 + i_creqv + i_crandc + i_crorc + i_mcrf == 1);
-          if (f_past_valid == 1'b1 && $past(i_mcrf) == 1'b1 && $past(bf) == $past(bfa) ) assert ( $past(o_cr) == o_cr );
-      end
-      // If not enabled, CR should not change
-      if (f_past_valid == 1'b1 && $past(i_en) == 1'b0) assert ( $past(o_cr) == o_cr );
+      if (f_past_valid == 1'b1 && $past(i_mcrf) == 1'b1 && $past(bf) == $past(bfa))
+        assert ($past(o_cr) == o_cr);
+    end
+    // If not enabled, CR should not change
+    if (f_past_valid == 1'b1 && $past(i_en) == 1'b0) assert ($past(o_cr) == o_cr);
   end
 `endif
 
