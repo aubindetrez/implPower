@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal BranchFacility.v
+prep -top BranchFacility
+
+[files]
+BranchFacility.v

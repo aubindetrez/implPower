@@ -226,4 +226,28 @@ module BranchFacility (
     #1;
   end
 
+`ifdef FORMAL
+  // Used by formal verification to check not check $past(...) on initial conditions
+  logic f_past_valid;
+  initial f_past_valid = 1'b0;
+  always @(posedge i_clk) f_past_valid <= 1'b1;
+
+  always @(posedge i_clk) begin
+    assume (i_rst == 1'b0);
+
+    // We assume no instruction is sent (i_en) while the cpu is stalled (i_stall)
+    if (i_stall == 1'b1) assume (i_en == 1'b0);
+
+    // When no branch occurs -> Run sequential instructions
+    if (f_past_valid == 1'b1 && $past(i_en) == 1'b0) begin
+      assert ($past(cia) == cia + 4);
+    end
+
+    // When stalled, the Current Instruction Address CIA, do not change
+    if (f_past_valid == 1'b1 && $past(i_stall) == 1'b0) begin
+      assert ($past(cia) == cia);
+    end
+  end
+`endif
+
 endmodule
