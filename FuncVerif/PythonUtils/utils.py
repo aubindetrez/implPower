@@ -156,15 +156,65 @@ def condreg_xl_form_to_string(PO, BT, BA, BB, XO):
    |0 ---|6 ---|11 ---|16 ---|21 --- | 31
    |  PO |  BT |  BA  |  BB  |   XO  | 0
     """
-    PO_str = int_to_bin(6, PO) # 6
-    BT_str = int_to_bin(5, BT) # 6+5=11
-    BA_str = int_to_bin(5, BA) # +5=16
-    BB_str = int_to_bin(5, BB) # 5 = 21
-    XO_str = int_to_bin(10, XO) # +10 = 31
+    PO_str = int_to_bin(6, PO)
+    BT_str = int_to_bin(5, BT)
+    BA_str = int_to_bin(5, BA)
+    BB_str = int_to_bin(5, BB)
+    XO_str = int_to_bin(10, XO)
     result = PO_str + BT_str + BA_str + BB_str + XO_str + "0"
     assert len(result) == 32
     return result + 32*"0"  # Big Endian
 
+def d_form_to_string(PO, RT, RA, D1):
+    """
+    Described in Power ISA section 3.3.1
+   |0 ---|6 ---|11 ---|16 --- 31|
+   |  PO |  RT |  RA  |    D1   |
+    >>> d_form_to_string(PO=1, RT=0x3, RA=0x6, D1=0xbe)
+    '00000100011001100000000010111110'
+    """
+    PO_str = int_to_bin(6, PO)
+    RT_str = int_to_bin(5, RT)
+    RA_str = int_to_bin(5, RA)
+    D1_str = int_to_bin(16, D1)
+    result = PO_str # bits 32..37 (suffix 0..5)
+    result += RT_str # bits 38..42 (suffix 6..10)
+    result += RA_str # bits 43..47 (suffix 11..15)
+    result += D1_str # bits 48..63 (suffix 16..31)
+    assert len(result) == 32
+    return result
+def d_form_to_string_prefixed(R, D0, PO, RT, RA, D1):
+    """
+    Modified Load/Store Form (MLS) Section 1.6.3.3
+   |0 ---|6 ---|8 -|9 -|11 -|12 -|14 --- 31|
+   |  1  |  2  |0  |// |R   | // |   D0    |
+
+    Described in Power ISA section 3.3.1
+   |0 ---|6 ---|11 ---|16 --- 31|
+   |  PO |  RT |  RA  |    D1   |
+   >>> d_form_to_string_prefixed(R=1, D0=0x16, PO=0x21, RT=0x3, RA=0x6, D1=0xbe)
+   '0000011000010000000000000001011010000100011001100000000010111110'
+    """
+    R_str = int_to_bin(1, R)
+    D0_str = int_to_bin(18, D0)
+
+    PO_str = int_to_bin(6, PO)
+    RT_str = int_to_bin(5, RT)
+    RA_str = int_to_bin(5, RA)
+    D1_str = int_to_bin(16, D1)
+    result = "000001" # bits 0..5
+    result += "10" # bits 6..7
+    result += "0" # bit 8
+    result += "00" # bit 9..10
+    result += R_str # bit 11
+    result += "00" # bit 12..13
+    result += D0_str # bits 16..31
+    result += PO_str # bits 32..37 (suffix 0..5)
+    result += RT_str # bits 38..42 (suffix 6..10)
+    result += RA_str # bits 43..47 (suffix 11..15)
+    result += D1_str # bits 48..63 (suffix 16..31)
+    assert len(result) == 64
+    return result
 
 def BE(num: int, length: int) -> int:
     """ Little Endian / Big Endian """
