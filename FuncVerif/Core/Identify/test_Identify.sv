@@ -1,7 +1,7 @@
 // SystemVerilog verification code
 // This is independant from the Python verif. code
 
-`include "../../Logic/Identify.sv"
+`include "../../../Logic/Core/Identify.sv"
 `timescale 100ps / 100ps
 
 module test_Identify;

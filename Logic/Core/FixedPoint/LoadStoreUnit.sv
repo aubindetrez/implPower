@@ -10,32 +10,32 @@ module LoadStoreUnit (
     input logic i_en,
     input logic i_stall,
 
-    input logic [0:31] i_instr_prefix, // first 32 MSB from the 64b preffixed instruction
-    input logic [0:31] i_instr_suffix, // 32 LSB from the 64b preffixed instruction
+    input logic [0:31] i_instr_prefix,  // first 32 MSB from the 64b preffixed instruction
+    input logic [0:31] i_instr_suffix,  // 32 LSB from the 64b preffixed instruction
 
-    output logic [0:4] o_rf1_addr, // address to index the register file (RF)
+    output logic [0:4] o_rf1_addr,  // address to index the register file (RF)
     // If simultaneous read and write, the old value is read
-    output logic o_rf1_enr, // enable read from the register file
-    output logic o_rf1_enw, // enable write to the register file
+    output logic o_rf1_enr,  // enable read from the register file
+    output logic o_rf1_enw,  // enable write to the register file
 
-    output logic [0:4] o_rf2_addr, // address to index the register file (RF)
+    output logic [0:4] o_rf2_addr,  // address to index the register file (RF)
     // If simultaneous read and write, the old value is read
-    output logic o_rf2_enr, // enable read from the register file
-    output logic o_rf2_enw, // enable write to the register file
+    output logic o_rf2_enr,  // enable read from the register file
+    output logic o_rf2_enw,  // enable write to the register file
 
-    output logic [0:63] o_data_addr, // address to read from the main memory (Data cache)
+    output logic [0:63] o_data_addr,  // address to read from the main memory (Data cache)
     // If simultaneous read and write, the old value is read
-    output logic o_data_enr, // enable read from the data cache
-    output logic o_data_enw, // enable write to the data cache
+    output logic o_data_enr,  // enable read from the data cache
+    output logic o_data_enw,  // enable write to the data cache
 
-    input logic i_is_op34, // Can be a lbz or plbz instruction
-    input logic [0:63] i_cia, // Current Instruction Address (CIA)
+    input logic i_is_op34,  // Can be a lbz or plbz instruction
+    input logic [0:63] i_cia,  // Current Instruction Address (CIA)
 
     // PLBZ: if R is equal to 1 and RA is not equal to 0, the instruction form if invalid
     output logic err_invalid_load_instr,
 
     // Request all pipeline to stall because more than 1 cycle is needed to perform load/store
-    output logic o_stall,
+    output logic o_stall
 );
   // fields from the instruction's suffix
   logic [0:5] ra;
@@ -49,15 +49,15 @@ module LoadStoreUnit (
   logic [0:5] prefix_op;
   assign prefix_op = i_instr_prefix[0:5];
   logic r;
-  assign r = i_instr_prefix[11]; // valid when is_plbz == 1'b1
+  assign r = i_instr_prefix[11];  // valid when is_plbz == 1'b1
   logic [0:17] d0;
   assign d0 = i_instr_prefix[14:31];
 
 
   logic is_ra_null;
-  assign is_ra_null = (ra == 6'b000000)? 1'b1: 1'b0;
+  assign is_ra_null = (ra == 6'b000000) ? 1'b1 : 1'b0;
   logic is_prefixed;
-  assign is_prefixed = (prefix_op == 6'b000001)? 1'b1: 1'b0;
+  assign is_prefixed = (prefix_op == 6'b000001) ? 1'b1 : 1'b0;
   logic is_plbz;
   assign is_plbz = i_is_op34 & is_prefixed;
   logic is_plbz_w_r;
@@ -67,31 +67,22 @@ module LoadStoreUnit (
 
   assign err_invalid_load_instr = is_plbz_w_r & ~is_ra_null;
 
-  logic [0:63] exts_d1; // EXTS64(D)
-  assign exts_d1 = { {48{d1[0]}}, d1};
-  logic [0:63] exts_d0d1; // EXTS64(d0||d1)
-  assign exts_d0d1 = { {30{d0[0]}}, {d0, d1}};
+  logic [0:63] exts_d1;  // EXTS64(D)
+  assign exts_d1 = {{48{d1[0]}}, d1};
+  logic [0:63] exts_d0d1;  // EXTS64(d0||d1)
+  assign exts_d0d1 = {{30{d0[0]}}, {d0, d1}};
 
 
-  logic [0:63] effective_address; // also called EA, used to index (data) memory
-  always_comb begin
-    if (i_is_op34 == 1'b1 && is_ra_null == 1'b1) effective_address = exts_d1;
-    else if (i_is_op34 == 1'b1 && is_ra_null == 1'b0) effective_address = i_register + exts_d1; // TODO wait a cycle
+  logic [0:63] effective_address;  // also called EA, used to index (data) memory
 
-    else if (is_plbz_wo_r == 1'b1 && is_ra_null == 1'b1) effective_address = exts_d0d1;
-    else if (is_plbz_wo_r == 1'b1 && is_ra_null == 1'b0) effective_address = i_register + exts_d0d1; // TODO wait a cycle
-
-    else if (is_plbz_w_r == 1'b1 && is_ra_null == 1'b1) effective_address = CIA + exts_d0d1;
-  end
-
-// Create a trace file
+  // Create a trace file
   initial begin
     $dumpfile("trace.vcd");
     $dumpvars(0, LoadStoreUnit);
     #1;
   end
 
-// Using formal verification to perform sanitary checks
+  // Using formal verification to perform sanitary checks
 `ifdef FORMAL
   // Used by formal verification to avoid $past(...) on initial conditions
   logic f_past_valid;
