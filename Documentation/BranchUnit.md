@@ -22,7 +22,7 @@ execute and the instruction fetch will resume when the branch is resolved (can
 be taken or not).
 This implies: The branch Unit needs to have dedicated resources (like a 64b
 adder) in order to resolve branches quickly and therefore avoid the fetching
-stage to stall.
+stage to stall for too long.
 
 ## Effective Address
 Effective Address Calculation is discussed in the Power ISA, page 29.
