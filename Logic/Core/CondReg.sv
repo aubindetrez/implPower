@@ -68,6 +68,7 @@ module CondReg (
   //assign cr_d[7] = (i_mcrf == 1'b1 && bf == 1)? int_cr[bfa*4+3]: int_cr[7];
   // [...]
 
+  // TODO synthesis and optimize
   genvar i;
   for (i = 0; i < 32; i++) begin : gen_mcrf
     assign cr_d[i] = (i_mcrf == 1'b1 && bf == i / 4) ? int_cr[bfa_sht+i%4] : int_cr[i];

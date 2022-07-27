@@ -9,4 +9,4 @@ read -formal Identify.sv
 prep -top Identify
 
 [files]
-../../Logic/Identify.sv
+../../../Logic/Core/Identify.sv

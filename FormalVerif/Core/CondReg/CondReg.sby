@@ -9,4 +9,4 @@ read -formal CondReg.sv
 prep -top CondReg
 
 [files]
-../../Logic/CondReg.sv
+../../../Logic/Core/CondReg.sv

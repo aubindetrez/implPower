@@ -24,7 +24,7 @@ then
     echo "Error: You do not have Python installed"
     exit 1
 fi
-all_py_files=`find . -name "*.py"`
+all_py_files=`find $gitroot -name "*.py"`
 for file in $all_py_files
 do
     echo ">>> Checking Python syntax on $file"
@@ -70,9 +70,11 @@ do echo ">>> Running Linter on $file"
     fi
 done
 
-# Run all Functional tests by executing test.sh in every directories in FuncVerif/
-for dir in FuncVerif/*
-do echo ">>> Running Functional tests for $dir"
+cd $gitroot
+# Run all High Level Model tests by executing test.sh in every directories in HLModel/
+for test_file in `find $gitroot/HLModel/ -name "test.sh"`
+do  dir=`dirname $test_file`
+    echo ">>> Running Unit tests on the High Level Model (HLModel) for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
@@ -82,13 +84,17 @@ do echo ">>> Running Functional tests for $dir"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
         exit 1
     fi
-    ./clean.sh
+    if [ -x ./clean.sh ]
+    then ./clean.sh
+    fi
     cd $gitroot
 done
 
-# Run all Formal tests by executing test.sh in every directories in FormalVerif/
-for dir in FormalVerif/*
-do echo ">>> Running Formal tests for $dir"
+cd $gitroot
+# Run all Functional tests by executing test.sh in every directories in FuncVerif/
+for test_file in `find $gitroot/FuncVerif/ -name "test.sh"`
+do  dir=`dirname $test_file`
+    echo ">>> Running Functional tests for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
@@ -98,6 +104,28 @@ do echo ">>> Running Formal tests for $dir"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
         exit 1
     fi
-    ./clean.sh
+    if [ -x ./clean.sh ]
+    then ./clean.sh
+    fi
+    cd $gitroot
+done
+
+cd $gitroot
+# Run all Formal tests by executing test.sh in every directories in FormalVerif/
+for test_file in `find $gitroot/FormalVerif/ -name "test.sh"`
+do  dir=`dirname $test_file`
+    echo ">>> Running Formal tests for $dir"
+    cd $dir
+    ./test.sh
+    if ! [ $? -eq 0 ]
+    then
+        echo ">>> Verification failed while testing $dir"
+        echo ">>> Please fix it and try again"
+        echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+        exit 1
+    fi
+    if [ -x ./clean.sh ]
+    then ./clean.sh
+    fi
     cd $gitroot
 done

@@ -1,4 +1,4 @@
-# Branch Facility
+# Branch Unit
 Branch Facility is described in the Power ISA v3.1, (Chapter 2, page 33).
 
 Section 2.4 and (1.10.3) describes 5 cases of effective address calculation.
@@ -20,7 +20,7 @@ instructions are fetched until the Next Instruction Address is resolved (no
 speculative execution). Instructions which are already in the pipeline will
 execute and the instruction fetch will resume when the branch is resolved (can
 be taken or not).
-This implies: The branch facility needs to have dedicated resources (like a 64b
+This implies: The branch Unit needs to have dedicated resources (like a 64b
 adder) in order to resolve branches quickly and therefore avoid the fetching
 stage to stall.
 

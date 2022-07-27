@@ -77,6 +77,10 @@
 - BCLR (Branch Conditional to Link Register) - This is an instruction, see the ISA
 - Instruction Set Architecture (ISA) - Document containing the description of the instructions
 - BRanch Unit (BRU)
+- Fixed-Point Unit (FXU)
+- Memory Management Unit (MMU)
+- Load and Store Unit (LSU)
+- Vector/Scalar Unit (VSU)
 
 # Notation
 I am using the same notation at the PowerISA.

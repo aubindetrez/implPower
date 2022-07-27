@@ -1,8 +1,8 @@
 // Documentation about this module is located in
-// Documentation/BranchFacility.md
+// Documentation/BranchUnit.md
 `timescale 100ps / 100ps
 
-module BranchFacility (
+module BranchUnit (
     input logic i_clk,
     input logic i_rst,
     input logic i_32b_mode,
@@ -222,7 +222,7 @@ module BranchFacility (
 
   initial begin
     $dumpfile("trace.vcd");
-    $dumpvars(0, BranchFacility);
+    $dumpvars(0, BranchUnit);
     #1;
   end
 

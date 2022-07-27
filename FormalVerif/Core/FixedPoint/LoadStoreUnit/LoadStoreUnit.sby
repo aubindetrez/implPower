@@ -1,0 +1,12 @@
+[options]
+mode prove
+
+[engines]
+smtbmc
+
+[script]
+read -formal LoadStoreUnit.sv
+prep -top LoadStoreUnit
+
+[files]
+../../../../Logic/Core/FixedPoint/LoadStoreUnit.sv
