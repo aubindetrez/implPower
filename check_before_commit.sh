@@ -2,6 +2,8 @@
 
 gitroot="`git rev-parse --show-toplevel`"
 cd $gitroot
+REPORT="" # Summary
+
 
 # Check file references in Documentation
 echo ">>> Checking if you deleted/renamed a file and didn't update documentation..."
@@ -70,62 +72,76 @@ do echo ">>> Running Linter on $file"
     fi
 done
 
+REPORT="$REPORT \n High Level Model's tests:"
 cd $gitroot
 # Run all High Level Model tests by executing test.sh in every directories in HLModel/
 for test_file in `find $gitroot/HLModel/ -name "test.sh"`
 do  dir=`dirname $test_file`
+    REPORT="$REPORT \n    - $dir   "
     echo ">>> Running Unit tests on the High Level Model (HLModel) for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
     then
+        REPORT="$REPORT FAILED"
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
         exit 1
     fi
+    REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
     then ./clean.sh
     fi
     cd $gitroot
 done
 
+REPORT="$REPORT \n Functional Verification tests:"
 cd $gitroot
 # Run all Functional tests by executing test.sh in every directories in FuncVerif/
 for test_file in `find $gitroot/FuncVerif/ -name "test.sh"`
 do  dir=`dirname $test_file`
+    REPORT="$REPORT \n    - $dir   "
     echo ">>> Running Functional tests for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
     then
+        REPORT="$REPORT FAILED"
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
         exit 1
     fi
+    REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
     then ./clean.sh
     fi
     cd $gitroot
 done
 
+REPORT="$REPORT \n Formal Verification tests:"
 cd $gitroot
 # Run all Formal tests by executing test.sh in every directories in FormalVerif/
 for test_file in `find $gitroot/FormalVerif/ -name "test.sh"`
 do  dir=`dirname $test_file`
+    REPORT="$REPORT \n    - $dir   "
     echo ">>> Running Formal tests for $dir"
     cd $dir
     ./test.sh
     if ! [ $? -eq 0 ]
     then
+        REPORT="$REPORT FAILED"
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
         exit 1
     fi
+    REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
     then ./clean.sh
     fi
     cd $gitroot
 done
+
+echo -e "$REPORT" # Print a Summary
