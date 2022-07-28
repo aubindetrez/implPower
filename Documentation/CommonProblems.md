@@ -20,3 +20,5 @@
 - SystemVerilog if you do `logic a; assign a = something[0:31];` there is no error, even if it is
   obviously wrong
 - Python: having "Unused function..." warning would be able to catch copy/paste typos
+- SystemC: When implementing Stimulus/Monitor testbench: Declare the same signals 5 times, for
+  DUT, the Monitor, the Stimulus, the vcd and the main.

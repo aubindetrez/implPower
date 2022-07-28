@@ -3,7 +3,7 @@
 This module identifies an intruction coming from the instruction fetch (IF).
 And sends it to the appropriate decoding unit.
 
-Inputs:
+Interface:
 - `i_clk` The main core clock
 - `i_rst` A reset signal
 Active high: When `1'b1` all Latches (Flip-Flops...) resets to their default value.
@@ -40,10 +40,6 @@ that `i_instr` is a branch.
 - `o_condreg_mcrf`, Complementary information to decode the Conditional register instruction
 
 - TODO identification signals for other instructions
-
-Outputs:
-- 1 bit: Is the instruction a branch
-... (TODO)
 
 ## Principle of operation
 The module receives a 32-bit instruction from the Instruction fetch.
