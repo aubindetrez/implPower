@@ -13,22 +13,25 @@ When low (`1'b0`) inputs are ignored, all internal state stay unchanged.
 
 - `o_instr_suffix` a 32-bit instruction, eguals to `i_instr`
 - `o_instr_prefix` a 32-bit instruction, contains the prefix if the instruction is prefixed,
+
+- `o_stall_fetch_arb`, active high, stalls the instruction fetch.
   `32'b0` otherwise.
+- `i_arb_full_mask`, N-bit (TODO determine the size), coming from the Arbiter, if the in-comming
+  instruction matches then `o_stall_fetch_arb` is set to high.  
 
 - `o_branch_identified`, active high, report to the Instruction Fetch (IF) and to the Arbiter
 that `i_instr` is a branch.
+- `o_condreg_identified`, active high, report to the Arbiter that `i_instr` is a
+  conditional register instruction.
+
+Additional information about branch instructions:
 - `o_branch_i_form`, Complementary information to decode the branch
 - `o_branch_b_form`, Complementary information to decode the branch
 - `o_branch_cond_lr`, Complementary information to decode the branch
 - `o_branch_cond_ctr`, Complementary information to decode the branch
 - `o_branch_cond_tar`, Complementary information to decode the branch
 
-- `o_stall_fetch_arb`, active high, stalls the instruction fetch.
-- `i_arb_full_mask`, N-bit (TODO determine the size), coming from the Arbiter, if the in-comming
-  instruction matches then `o_stall_fetch_arb` is set to high.  
-
-- `o_condreg_identified`, active high, report to the Arbiter that `i_instr` is a
-  conditional register instruction.
+Additional information about condreg (Condition Register) instructions:
 - `o_condreg_crand`, Complementary information to decode the Conditional register instruction
 - `o_condreg_crnand`, Complementary information to decode the Conditional register instruction
 - `o_condreg_cror`, Complementary information to decode the Conditional register instruction

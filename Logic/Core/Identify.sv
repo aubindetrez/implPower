@@ -11,28 +11,32 @@ module Identify (
     input logic i_clk,
     input logic i_rst,
     input logic i_en,
-    input logic [0:63] i_instr,
+    input logic [0:31] i_instr,
 
-    // To/From BRanch Unit (BRU)
-    output logic [0:31] o_bru_instr,  // output instruction to the branch unit
-    output logic o_bru_en,  // Enable branch unit
-    output logic o_bru_i_form,  // if o_bru_en is set, indication the BU what form is the instr.
-    output logic o_bru_b_form,  // if o_bru_en is set, indication the BU what form is the instr.
-    output logic o_bru_cond_LR,  // if o_bru_en is set, indication the BU what form is the instr.
-    output logic o_bru_cond_CTR,  // if o_bru_en is set, indication the BU what form is the instr.
-    output logic o_bru_cond_TAR,  // if o_bru_en is set, indication the BU what form is the instr.
+    output logic [0:31] o_instr_suffix,
+    output logic [0:31] o_instr_prefix,
 
-    output logic o_condreg_en,  // i_instr is a condition register Instruction
-    output logic [0:31] o_condreg_instr,  // output instruction to the CondReg Unit
-    output logic o_condreg_crand,  // Instruction is a Condition Register AND
-    output logic o_condreg_crnand,  // Instruction is a Condition Register NAND
-    output logic o_condreg_cror,  // Instruction is a Conditon Register OR
-    output logic o_condreg_crxor,  // Instruction is a Condition Register XOR
-    output logic o_condreg_crnor,  // Instruction is a Condition Register NOR
-    output logic o_condreg_creqv,  // Instruction is a Condition Register Equivalent
-    output logic o_condreg_crandc,  // Instruction is a Condition Register AND with Complement
-    output logic o_condreg_crorc,  // Instruction is a Conditon Register OR with Complement
-    output logic o_condreg_mcrf  // Instruction is a Move Conditoin Register Field
+    // Instruction identification
+    output logic o_branch_identified,
+    output logic o_condreg_identified,
+
+    // Additional information
+    output logic o_branch_i_form,
+    output logic o_branch_b_form,
+    output logic o_branch_cond_LR,
+    output logic o_branch_cond_CTR,
+    output logic o_branch_cond_TAR,
+
+    // Additional information
+    output logic o_condreg_crand,
+    output logic o_condreg_crnand,
+    output logic o_condreg_cror,
+    output logic o_condreg_crxor,
+    output logic o_condreg_crnor,
+    output logic o_condreg_creqv,
+    output logic o_condreg_crandc,
+    output logic o_condreg_crorc,
+    output logic o_condreg_mcrf
 );
   logic is_prefixed;
   logic [0:5] primary_opcode;
@@ -42,6 +46,20 @@ module Identify (
 
   // Detect if [0:31] is an prefix - Power ISA Section 1.6.3
   assign is_prefixed = (primary_opcode == 6'b000001) ? 1'b1 : 1'b0;
+
+  // If the i_instr is prefixed and the module is enabled,
+  // latch i_instr and next cycle we can decode a prefixed instruction
+  // {prefix, suffix}
+  logic [0:31] suffix;
+  assign suffix = i_instr;
+  logic [0:31] prefix_q, prefix_d;
+  always_ff @(posedge i_clk or posedge i_rst) begin
+      if (i_rst == 1'b1) prefix_q <= 32'b0;
+      else if (i_en == 1'b1) prefix_q <= prefix_d;
+  end
+  assign prefix_d = (is_prefixed == 1'b1)? i_instr: 32'b0;
+  assign o_instr_suffix = suffix;
+  assign o_instr_prefix = prefix_q;
 
   logic is_branch_i_form;
   logic is_branch_b_form;
@@ -63,17 +81,15 @@ module Identify (
                                     && i_instr[21:30] == 10'b1000110000)? 1'b1: 1'b0;
 
 
-  assign o_bru_en = is_branch_i_form | is_branch_b_form | is_branch_cond_to_LR
+  assign o_branch_identified = is_branch_i_form | is_branch_b_form | is_branch_cond_to_LR
                             | is_branch_cond_to_CTR | is_branch_cond_to_TAR;
-  assign o_bru_i_form = is_branch_i_form;
-  assign o_bru_b_form = is_branch_b_form;
-  assign o_bru_cond_LR = is_branch_cond_to_LR;
-  assign o_bru_cond_CTR = is_branch_cond_to_CTR;
-  assign o_bru_cond_TAR = is_branch_cond_to_TAR;
-  assign o_bru_instr = i_instr[0:31];
+  assign o_branch_i_form = is_branch_i_form;
+  assign o_branch_b_form = is_branch_b_form;
+  assign o_branch_cond_LR = is_branch_cond_to_LR;
+  assign o_branch_cond_CTR = is_branch_cond_to_CTR;
+  assign o_branch_cond_TAR = is_branch_cond_to_TAR;
 
-  assign o_condreg_instr = i_instr[0:31];
-  assign o_condreg_en = o_condreg_crand | o_condreg_crnand | o_condreg_cror | o_condreg_crxor |
+  assign o_condreg_identified = o_condreg_crand | o_condreg_crnand | o_condreg_cror | o_condreg_crxor |
                         o_condreg_crnor | o_condreg_creqv | o_condreg_crandc| o_condreg_crorc |
                         o_condreg_mcrf;
   assign o_condreg_crand = (is_branch_xl_form == 1'b1
@@ -98,16 +114,17 @@ module Identify (
 `ifdef FORMAL
   always @(posedge i_clk) begin
     // Making sure an instruction is not identified both as Conditional Register and as Branch
-    if (o_condreg_en == 1'b1) assert (o_bru_en == 1'b0);
+    if (o_condreg_identified == 1'b1) assert (o_branch_identified == 1'b0);
+    if (o_branch_identified == 1'b1) assert (o_condreg_identified == 1'b0);
 
     // Unique instruction is detected
-    if (o_condreg_en == 1'b1)
+    if (o_condreg_identified == 1'b1)
       assert (o_condreg_crand + o_condreg_crnand + o_condreg_cror
                                           + o_condreg_crxor + o_condreg_crnor + o_condreg_creqv
                                           + o_condreg_crandc+ o_condreg_crorc
                                           + o_condreg_mcrf == 1);
     // Unique instruction is detected
-    if (o_bru_en == 1'b1)
+    if (o_branch_identified == 1'b1)
       assert(is_branch_i_form + is_branch_b_form + is_branch_cond_to_LR
                                           + is_branch_cond_to_CTR + is_branch_cond_to_TAR == 1);
   end
