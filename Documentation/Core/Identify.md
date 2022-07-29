@@ -44,6 +44,7 @@ Additional information about condreg (Condition Register) instructions:
 - `o_condreg_mcrf`, Complementary information to decode the Conditional register instruction
 
 - TODO identification signals for other instructions
+- TODO continue description of the Identify unit as work on the functional units continues
 
 ## Principle of operation
 The module receives a 32-bit instruction from the Instruction fetch.
@@ -52,6 +53,8 @@ It must identify whether the instruction is a branch or not.
 
 Note: when `o_branch_identified` is raised, the instruction fetch (IF) stops fetching new
 instruction until the branch is resolved (in order to improve power efficiency).
+This prevent control hazards (see
+[https://en.wikipedia.org/wiki/Hazard_(computer_architecture)](https://en.wikipedia.org/wiki/Hazard_(computer_architecture))).
 
 It must also identify what "kind" of instruction is it (we can also call it pre-decode).
 
@@ -64,3 +67,51 @@ instruction will be forwarded to the decode stage via `o_instr_prefix` and `o_in
 
 If the identified instruction matches `i_arb_full_mask` (TODO To be determined) then
 `o_stall_fetch_arb` is raised until `i_arb_full_mask` changed and the fetching can proceed.
+
+## Other open-source projects
+
+### Microwatt
+TODO check Microwatt branch unit
+Microwatt can be found on github: https://github.com/antonblanchard/microwatt
+
+### A2I
+TODO check A2I branch unit
+A2I can be found on github: https://github.com/openpower-cores/a2i
+
+### A2O
+TODO check A2O branch unit
+A2O can be found on github: https://github.com/openpower-cores/a2o
+
+### Ibex (LowRISC RISC-V)
+TODO check Ibex branch unit
+
+### Rocket-Chip (RISC-V)
+TODO check Rocket-Chip branch unit
+Rocket-Chip code can be found on github: https://github.com/chipsalliance/rocket-chip
+
+### Papers
+TODO reference research papers and write an overview
+
+## Performance
+TODO add information about design choices regarding performance, power, area (and cost)
+
+## Verification
+TODO add verification Status
+
+## Physical Design
+### Synthesis
+- TODO synthesis for SKY130
+    - Number/Type of gates
+    - Logical Depth (or FO4?)
+- TODO synthesis for FreePDK45...
+- TODO synthesis for AIG...
+- TODO synthesis for Xilinx7...
+
+### Static analysis
+- TODO Timing
+- TODO Power
+
+### Post Place and Route (PnR)
+- TODO Timing
+- TODO Power
+- TODO Area

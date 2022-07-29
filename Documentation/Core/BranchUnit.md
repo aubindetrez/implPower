@@ -1,5 +1,7 @@
 # Branch Unit
 Branch Facility is described in the Power ISA v3.1, (Chapter 2, page 33).
+Chapter 4 defines previleged instructions.
+Like Machine State Register (MSR) (Section 4.2.1)
 
 Section 2.4 and (1.10.3) describes 5 cases of effective address calculation.
 

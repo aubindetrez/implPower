@@ -81,6 +81,15 @@
 - Memory Management Unit (MMU)
 - Load and Store Unit (LSU)
 - Vector/Scalar Unit (VSU)
+- Reservation Station (RS)
+- Instruction Decode (ID)
+- Read After Write (RAW), https://en.wikipedia.org/wiki/Hazard_(computer_architecture)
+- Write After Write (WAW), https://en.wikipedia.org/wiki/Hazard_(computer_architecture) 
+- Write After Read (WAR), https://en.wikipedia.org/wiki/Hazard_(computer_architecture)
+- Common Data Bus (CDB)
+- Secure Memory Facility (SMF) See power ISE Section 3
+- Machine State Register (MSR) See Section 4.2.1
+- Branch History Rolling Buffer (RHRB)
 
 # Notation
 I am using the same notation at the PowerISA.
