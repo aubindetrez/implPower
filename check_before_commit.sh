@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+# You can set export DEBUG=1 before calling this script if you want test to stop on the first fail
+
 gitroot="`git rev-parse --show-toplevel`"
 cd $gitroot
 REPORT="" # Summary
@@ -77,6 +79,11 @@ cd $gitroot
 # Run all High Level Model tests by executing test.sh in every directories in HLModel/
 for test_file in `find $gitroot/HLModel/ -name "test.sh"`
 do  dir=`dirname $test_file`
+    # Ignore directory HLModel/Lib/systemc-2.3.3/objdir/examples
+    if [[ $dir == *"systemc-2.3.3/objdir/examples"* ]]; then
+        continue
+    fi
+
     REPORT="$REPORT \n    - $dir   "
     echo ">>> Running Unit tests on the High Level Model (HLModel) for $dir"
     cd $dir
@@ -86,8 +93,10 @@ do  dir=`dirname $test_file`
         REPORT="$REPORT FAILED"
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
-        echo ">>> Stopping the simulation (so you cannot miss it ;) )"
-        exit 1
+        if ! [ -z $DEBUG ]; then
+            echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+            exit 1
+        fi
     fi
     REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
@@ -111,7 +120,10 @@ do  dir=`dirname $test_file`
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
         echo ">>> Stopping the simulation (so you cannot miss it ;) )"
-        exit 1
+        if ! [ -z $DEBUG ]; then
+            echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+            exit 1
+        fi
     fi
     REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
@@ -134,8 +146,10 @@ do  dir=`dirname $test_file`
         REPORT="$REPORT FAILED"
         echo ">>> Verification failed while testing $dir"
         echo ">>> Please fix it and try again"
-        echo ">>> Stopping the simulation (so you cannot miss it ;) )"
-        exit 1
+        if ! [ -z $DEBUG ]; then
+            echo ">>> Stopping the simulation (so you cannot miss it ;) )"
+            exit 1
+        fi
     fi
     REPORT="$REPORT PASSED"
     if [ -x ./clean.sh ]
