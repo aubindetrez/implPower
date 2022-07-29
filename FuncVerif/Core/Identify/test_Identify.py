@@ -18,7 +18,8 @@ async def init_sequence(dut):
         print("[v] clock initialized")
     dut.i_rst.value = 0b1
     dut.i_en.value = 0b0
-    dut.i_instr.value = 0x0000000000000000
+    dut.i_instr.value = 0x00000000
+    dut.i_arb_full_mask = 0b0
     await Timer(200, units="ps")  # reset counters
     dut.i_rst.value = 0b0
     await Timer(200, units="ps")  # reset counters
@@ -28,16 +29,21 @@ async def init_sequence(dut):
     await Timer(200, units="ps")  # reset counters
 
 ID_Coverage = coverage_section (
+  CoverPoint("dut.i_arb_full_mask", xf = lambda dut : dut.i_arb_full_mask.value.integer, bins = [0, 1]),
+  CoverPoint("dut.o_stall_fetch_arb", xf = lambda dut : dut.o_stall_fetch_arb.value.integer, bins = [0, 1]),
+  CoverPoint("dut.o_unknown_instr", xf = lambda dut : dut.o_unknown_instr.value.integer, bins = [0, 1]),
+  CoverPoint("dut.o_condreg_identified", xf = lambda dut : dut.o_condreg_identified.value.integer, bins = list(range(0,2)) ),
+  CoverPoint("dut.o_branch_identified", xf = lambda dut : dut.o_branch_identified.value.integer, bins = [0, 1]),
+  CoverCross("dut.cross", items = ["dut.o_condreg_identified", "dut.o_branch_identified", "dut.o_unknown_instr"]),
+
   # Branch Instructions coverage events
-  CoverPoint("dut.o_bru_en", xf = lambda dut : dut.o_bru_en.value.integer, bins = [0, 1]),
-  CoverPoint("top.o_bru_i_form", xf = lambda dut : dut.o_bru_i_form.value.integer, bins = [0, 1]),
-  CoverPoint("top.o_bru_b_form", xf = lambda dut : dut.o_bru_b_form.value.integer, bins = [0, 1]),
-  CoverPoint("top.o_bru_cond_LR", xf = lambda dut : dut.o_bru_cond_LR.value.integer, bins = [0, 1]),
-  CoverPoint("top.o_bru_cond_CTR", xf = lambda dut : dut.o_bru_cond_CTR.value.integer, bins = [0, 1]),
-  CoverPoint("top.o_bru_cond_TAR", xf = lambda dut : dut.o_bru_cond_TAR.value.integer, bins = [0, 1]),
+  CoverPoint("top.o_branch_i_form", xf = lambda dut : dut.o_branch_i_form.value.integer, bins = [0, 1]),
+  CoverPoint("top.o_branch_b_form", xf = lambda dut : dut.o_branch_b_form.value.integer, bins = [0, 1]),
+  CoverPoint("top.o_branch_cond_LR", xf = lambda dut : dut.o_branch_cond_LR.value.integer, bins = [0, 1]),
+  CoverPoint("top.o_branch_cond_CTR", xf = lambda dut : dut.o_branch_cond_CTR.value.integer, bins = [0, 1]),
+  CoverPoint("top.o_branch_cond_TAR", xf = lambda dut : dut.o_branch_cond_TAR.value.integer, bins = [0, 1]),
 
   # Condition Registers conditional events
-  CoverPoint("dut.o_condreg_en", xf = lambda dut : dut.o_condreg_en.value.integer, bins = list(range(0,2)) ),
   CoverPoint("dut.o_condreg_crand", xf = lambda dut : dut.o_condreg_crand.value.integer, bins = list(range(0,2)) ),
   CoverPoint("dut.o_condreg_crnand", xf = lambda dut : dut.o_condreg_crnand.value.integer, bins = list(range(0,2)) ),
   CoverPoint("dut.o_condreg_cror", xf = lambda dut : dut.o_condreg_cror.value.integer, bins = list(range(0,2)) ),
@@ -46,9 +52,7 @@ ID_Coverage = coverage_section (
   CoverPoint("dut.o_condreg_creqv", xf = lambda dut : dut.o_condreg_creqv.value.integer, bins = list(range(0,2)) ),
   CoverPoint("dut.o_condreg_crandc", xf = lambda dut : dut.o_condreg_crandc.value.integer, bins = list(range(0,2)) ),
   CoverPoint("dut.o_condreg_crorc", xf = lambda dut : dut.o_condreg_crorc.value.integer, bins = list(range(0,2)) ),
-  CoverPoint("dut.o_condreg_mcrf", xf = lambda dut : dut.o_condreg_mcrf.value.integer, bins = list(range(0,2)) ),
-
-  CoverCross("dut.cross", items = ["dut.o_condreg_en", "dut.o_bru_en"])
+  CoverPoint("dut.o_condreg_mcrf", xf = lambda dut : dut.o_condreg_mcrf.value.integer, bins = list(range(0,2)) )
 )
 @cocotb.coroutine
 @ID_Coverage
@@ -61,13 +65,30 @@ async def coverage_sample(dut):
 async def test_identify_prefixed(dut):
     await init_sequence(dut)
 
-    dut.i_instr = 0x0400000000000000
+    dut.i_instr = 0x04000000 # Send a prefix
     await RisingEdge(dut.i_clk)
     assert dut.is_prefixed.value == 1, "This is a prefixed instruction"
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 0
+    assert dut.o_unknown_instr.value == 0
 
-    dut.i_instr = 0x0000000000000000
+    dut.i_instr = 0x00000001 # Send a suffix
     await RisingEdge(dut.i_clk)
     assert dut.is_prefixed.value == 0, "This is not a prefixed instruction"
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 0
+    assert dut.o_unknown_instr.value == 1
+    assert dut.o_instr_prefix.value.integer == 0x04000000
+    assert dut.o_instr_suffix.value.integer == 0x00000001
+
+    dut.i_instr = 0x00000002
+    await RisingEdge(dut.i_clk) # Send a word instruction (suffix only)
+    assert dut.is_prefixed.value == 0, "This is not a prefixed instruction"
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 0
+    assert dut.o_unknown_instr.value == 1
+    assert dut.o_instr_prefix.value.integer == 0x00000000
+    assert dut.o_instr_suffix.value.integer == 0x00000002
 
 @cocotb.test()
 async def test_identify_branch(dut):
@@ -80,66 +101,71 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.branch_i_form_to_string(
         PO=18, LI=0xcafe, AA=1, LK=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_instr.value.binstr == '01001000000000110010101111111011', "Instruction do not match"
-    assert dut.o_bru_en.value == 1, "That instruction must be decoded by the BranchUnit"
-    assert dut.o_bru_i_form.value == 1, "This is an I form branch"
-    assert dut.o_bru_b_form.value == 0, "This isn't a B form branch but an I form branch"
-    assert dut.o_bru_cond_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.o_bru_cond_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.o_bru_cond_TAR.value == 0, "This is not a conditional branch to TAR"
-    assert dut.o_condreg_en.value == 0
+    assert dut.o_instr_suffix.value.binstr == '01001000000000110010101111111011'
+    assert dut.o_branch_identified.value == 1
+    assert dut.o_branch_i_form.value == 1, "This is an I form branch"
+    assert dut.o_branch_b_form.value == 0
+    assert dut.o_branch_cond_LR.value == 0
+    assert dut.o_branch_cond_CTR.value == 0
+    assert dut.o_branch_cond_TAR.value == 0
+    assert dut.o_condreg_identified.value == 0
+    assert dut.o_unknown_instr.value == 0
     await coverage_sample(dut)
 
     dut.i_instr = int(utils.branch_b_form_to_string(
         PO=16, BO=18, BI=27, BD=0xafe, AA=1, LK=0), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 1
-    assert dut.o_bru_instr.value.binstr == '01000010010110110010101111111010', "Instruction do not match"
-    assert dut.o_bru_i_form.value == 0, "This is not an I form branch but a B form branch"
-    assert dut.o_bru_b_form.value == 1, "This is a B form branch"
-    assert dut.o_bru_cond_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.o_bru_cond_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.o_bru_cond_TAR.value == 0, "This is not a conditional branch to TAR"
-    assert dut.o_condreg_en.value == 0
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 1
+    assert dut.o_instr_suffix.value.binstr == '01000010010110110010101111111010', "Instruction do not match"
+    assert dut.o_branch_i_form.value == 0, "This is not an I form branch but a B form branch"
+    assert dut.o_branch_b_form.value == 1, "This is a B form branch"
+    assert dut.o_branch_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_branch_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_branch_cond_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_condreg_identified.value == 0
     await coverage_sample(dut)
 
     dut.i_instr = int(utils.branch_xl_form_to_string(
         PO=19, BO=7, BI=4, BH=0b10, XO=16, LK=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 1
-    assert dut.o_bru_instr.value.binstr == '01001100111001000001000000100001', "Instruction do not match"
-    assert dut.o_bru_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.o_bru_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.o_bru_cond_LR.value == 1, "This is a conditional branch to LR"
-    assert dut.o_bru_cond_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.o_bru_cond_TAR.value == 0, "This is not a conditional branch to TAR"
-    assert dut.o_condreg_en.value == 0
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 1
+    assert dut.o_instr_suffix.value.binstr == '01001100111001000001000000100001', "Instruction do not match"
+    assert dut.o_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_branch_cond_LR.value == 1, "This is a conditional branch to LR"
+    assert dut.o_branch_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_branch_cond_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_condreg_identified.value == 0
     await coverage_sample(dut)
 
     dut.i_instr = int(utils.branch_xl_form_to_string(
         PO=19, BO=7, BI=4, BH=0b10, XO=528, LK=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 1
-    assert dut.o_bru_instr.value.binstr == '01001100111001000001010000100001', "Instruction do not match"
-    assert dut.o_bru_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.o_bru_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.o_bru_cond_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.o_bru_cond_CTR.value == 1, "This is a conditional branch to CTR"
-    assert dut.o_bru_cond_TAR.value == 0, "This is not a conditional branch to TAR"
-    assert dut.o_condreg_en.value == 0
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 1
+    assert dut.o_instr_suffix.value.binstr == '01001100111001000001010000100001', "Instruction do not match"
+    assert dut.o_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_branch_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_branch_cond_CTR.value == 1, "This is a conditional branch to CTR"
+    assert dut.o_branch_cond_TAR.value == 0, "This is not a conditional branch to TAR"
+    assert dut.o_condreg_identified.value == 0
     await coverage_sample(dut)
 
     dut.i_instr = int(utils.branch_xl_form_to_string(
         PO=19, BO=7, BI=4, BH=0b10, XO=560, LK=1), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 1
-    assert dut.o_bru_instr.value.binstr == '01001100111001000001010001100001', "Instruction do not match"
-    assert dut.o_bru_i_form.value == 0, "This is not an I form branch but a XL form branch"
-    assert dut.o_bru_b_form.value == 0, "This isn't a B form branch but a XL form branch"
-    assert dut.o_bru_cond_LR.value == 0, "This is not a conditional branch to LR"
-    assert dut.o_bru_cond_CTR.value == 0, "This is not a conditional branch to CTR"
-    assert dut.o_bru_cond_TAR.value == 1, "This is a conditional branch to TAR"
-    assert dut.o_condreg_en.value == 0
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 1
+    assert dut.o_instr_suffix.value.binstr == '01001100111001000001010001100001', "Instruction do not match"
+    assert dut.o_branch_i_form.value == 0, "This is not an I form branch but a XL form branch"
+    assert dut.o_branch_b_form.value == 0, "This isn't a B form branch but a XL form branch"
+    assert dut.o_branch_cond_LR.value == 0, "This is not a conditional branch to LR"
+    assert dut.o_branch_cond_CTR.value == 0, "This is not a conditional branch to CTR"
+    assert dut.o_branch_cond_TAR.value == 1, "This is a conditional branch to TAR"
+    assert dut.o_condreg_identified.value == 0
     await coverage_sample(dut)
 
     # Power ISA section 2.5.1
@@ -147,8 +173,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=257), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 1
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -164,8 +191,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=225), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 1
     assert dut.o_condreg_cror.value == 0
@@ -181,8 +209,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=449), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 1
@@ -198,8 +227,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=193), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -215,8 +245,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=33), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -232,8 +263,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=289), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -249,8 +281,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=129), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -266,8 +299,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=417), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0
@@ -283,8 +317,9 @@ async def test_identify_branch(dut):
     dut.i_instr = int(utils.condreg_xl_form_to_string(PO=19, BT=7, BA=3, BB=6,
         XO=0), 2)
     await RisingEdge(dut.i_clk)
-    assert dut.o_bru_en.value == 0
-    assert dut.o_condreg_en.value == 1
+    assert dut.o_unknown_instr.value == 0
+    assert dut.o_branch_identified.value == 0
+    assert dut.o_condreg_identified.value == 1
     assert dut.o_condreg_crand.value == 0
     assert dut.o_condreg_crnand.value == 0
     assert dut.o_condreg_cror.value == 0

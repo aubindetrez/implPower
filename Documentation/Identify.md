@@ -23,6 +23,7 @@ When low (`1'b0`) inputs are ignored, all internal state stay unchanged.
 that `i_instr` is a branch.
 - `o_condreg_identified`, active high, report to the Arbiter that `i_instr` is a
   conditional register instruction.
+- `o_unknown_instr`, active high, report to the Arbiter that the instruction couldn't be identified
 
 Additional information about branch instructions:
 - `o_branch_i_form`, Complementary information to decode the branch

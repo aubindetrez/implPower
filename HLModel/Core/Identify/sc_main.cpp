@@ -32,6 +32,7 @@ SC_MODULE(Monitor)
     sc_in<bool> i_condreg_crandc;
     sc_in<bool> i_condreg_crorc;
     sc_in<bool> i_condreg_mcrf;
+    sc_in<bool> i_unknown_instr;
 
     void MonGen()
     {
@@ -44,6 +45,7 @@ SC_MODULE(Monitor)
         // Monitor is called when an instruction is identified
         sensitive << i_branch_identified;
         sensitive << i_condreg_identified;
+        sensitive << i_unknown_instr;
         // Or when a new instruction is to be processed
         sensitive << i_instr;
     }
@@ -99,6 +101,9 @@ SC_MODULE(Identify)
     sc_out<sc_bv<32>> o_instr_suffix;
 
     sc_out<bool> o_branch_identified;
+    sc_out<bool> o_condreg_identified;
+    sc_out<bool> o_unknown_instr;
+
     sc_out<bool> o_branch_i_form;
     sc_out<bool> o_branch_b_form;
     sc_out<bool> o_branch_cond_lr;
@@ -107,8 +112,6 @@ SC_MODULE(Identify)
 
     sc_out<bool> o_stall_fetch_arb;
     sc_in<bool> i_arb_full_mask;
-
-    sc_out<bool> o_condreg_identified;
     sc_out<bool> o_condreg_crand;
     sc_out<bool> o_condreg_crnand;
     sc_out<bool> o_condreg_cror;
@@ -158,6 +161,7 @@ int sc_main(int argc, char* argv[])
     sc_signal<bool> condreg_crandc;
     sc_signal<bool> condreg_crorc;
     sc_signal<bool> condreg_mcrf;
+    sc_signal<bool> unknown_instr;
 
     sc_clock clk(/*Name*/"TestClock", /*Period*/10, /*Unit*/SC_NS,/*Duty*/0.5);
 
@@ -186,6 +190,7 @@ int sc_main(int argc, char* argv[])
     sc_trace(waveform, condreg_crandc, "o_condreg_crandc");
     sc_trace(waveform, condreg_crorc, "o_condreg_crorc");
     sc_trace(waveform, condreg_mcrf, "o_condreg_mcrf");
+    sc_trace(waveform, unknown_instr, "o_unknown_instr");
 
     Stimulus stim("Stimulus");
     stim.i_clk(clk);
@@ -219,6 +224,7 @@ int sc_main(int argc, char* argv[])
     dut.o_condreg_crandc(condreg_crandc);
     dut.o_condreg_crorc(condreg_crorc);
     dut.o_condreg_mcrf(condreg_mcrf);
+    dut.o_unknown_instr(unknown_instr);
     
     Monitor mon("Monitor");
     mon.i_clk(clk);
@@ -245,6 +251,7 @@ int sc_main(int argc, char* argv[])
     mon.i_condreg_crandc(condreg_crandc);
     mon.i_condreg_crorc(condreg_crorc);
     mon.i_condreg_mcrf(condreg_mcrf);
+    mon.i_unknown_instr(unknown_instr);
 
     sc_start(); // Runs forever
     //sc_start(10, SC_NS); // run for 10ns

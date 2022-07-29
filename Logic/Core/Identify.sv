@@ -15,10 +15,13 @@ module Identify (
 
     output logic [0:31] o_instr_suffix,
     output logic [0:31] o_instr_prefix,
+    input logic i_arb_full_mask,
+    output logic o_stall_fetch_arb,
 
     // Instruction identification
     output logic o_branch_identified,
     output logic o_condreg_identified,
+    output logic o_unknown_instr,
 
     // Additional information
     output logic o_branch_i_form,
@@ -38,6 +41,9 @@ module Identify (
     output logic o_condreg_crorc,
     output logic o_condreg_mcrf
 );
+
+  assign o_stall_fetch_arb = 1'b0;
+
   logic is_prefixed;
   logic [0:5] primary_opcode;
 
@@ -54,12 +60,15 @@ module Identify (
   assign suffix = i_instr;
   logic [0:31] prefix_q, prefix_d;
   always_ff @(posedge i_clk or posedge i_rst) begin
-      if (i_rst == 1'b1) prefix_q <= 32'b0;
-      else if (i_en == 1'b1) prefix_q <= prefix_d;
+    if (i_rst == 1'b1) prefix_q <= 32'b0;
+    else if (i_en == 1'b1) prefix_q <= prefix_d;
   end
-  assign prefix_d = (is_prefixed == 1'b1)? i_instr: 32'b0;
+  assign prefix_d = (is_prefixed == 1'b1) ? i_instr : 32'b0;
   assign o_instr_suffix = suffix;
   assign o_instr_prefix = prefix_q;
+
+  // If the instructon cannot be identified (and is not a prefix)
+  assign o_unknown_instr = ~is_prefixed & ~o_branch_identified & ~o_condreg_identified;
 
   logic is_branch_i_form;
   logic is_branch_b_form;
@@ -89,9 +98,9 @@ module Identify (
   assign o_branch_cond_CTR = is_branch_cond_to_CTR;
   assign o_branch_cond_TAR = is_branch_cond_to_TAR;
 
-  assign o_condreg_identified = o_condreg_crand | o_condreg_crnand | o_condreg_cror | o_condreg_crxor |
-                        o_condreg_crnor | o_condreg_creqv | o_condreg_crandc| o_condreg_crorc |
-                        o_condreg_mcrf;
+  assign o_condreg_identified = o_condreg_crand | o_condreg_crnand | o_condreg_cror |
+                        o_condreg_crxor | o_condreg_crnor | o_condreg_creqv | o_condreg_crandc|
+                        o_condreg_crorc | o_condreg_mcrf;
   assign o_condreg_crand = (is_branch_xl_form == 1'b1
                                 && i_instr[21:30] == 10'b01_0000_0001)? 1'b1: 1'b0; // Decimal 257
   assign o_condreg_crnand = (is_branch_xl_form == 1'b1
@@ -113,9 +122,9 @@ module Identify (
 
 `ifdef FORMAL
   always @(posedge i_clk) begin
-    // Making sure an instruction is not identified both as Conditional Register and as Branch
-    if (o_condreg_identified == 1'b1) assert (o_branch_identified == 1'b0);
-    if (o_branch_identified == 1'b1) assert (o_condreg_identified == 1'b0);
+    // Making sure an instruction is not identified both as Conditional Register and as a Branch
+    // (or other)
+    assert (o_condreg_identified + o_branch_identified + o_unknown_instr <= 1);
 
     // Unique instruction is detected
     if (o_condreg_identified == 1'b1)
