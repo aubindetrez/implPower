@@ -91,6 +91,9 @@
 - Machine State Register (MSR) See Section 4.2.1
 - Branch History Rolling Buffer (RHRB)
 - Branch History Rolling Buffer Instructions (BHRB)
+- Logic Level (LL) Timing Estimation like described by P.-M. Seidel and G.Even in "How many logic
+  levels does floating-point addition require?"
+- Floating Point Unit (FPU)
 
 # Notation
 I am using the same notation at the PowerISA.
