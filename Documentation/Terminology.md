@@ -90,6 +90,7 @@
 - Secure Memory Facility (SMF) See power ISE Section 3
 - Machine State Register (MSR) See Section 4.2.1
 - Branch History Rolling Buffer (RHRB)
+- Branch History Rolling Buffer Instructions (BHRB)
 
 # Notation
 I am using the same notation at the PowerISA.
