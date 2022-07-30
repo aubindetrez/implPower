@@ -99,6 +99,7 @@ for you: (May be outdated, I don't plan to maintaining this list)
 - How do we initialize registers and bringup a chip in a known state
 - Clock Gating / Data Gating
 - What is equivalence checking (yosys).
+- Outdated but a nice read: [Design of a computer: The control data 6600 by J.E. Thornton](https://archive.computerhistory.org/resources/text/CDC/cdc.6600.thornton.design_of_a_computer_the_control_data_6600.1970.102630394.pdf).
 
 
 How to contribute:
