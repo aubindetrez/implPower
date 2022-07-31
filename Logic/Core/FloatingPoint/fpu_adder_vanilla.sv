@@ -4,16 +4,7 @@
 // Warning: This is a slow adder implementation
 // It consists in 9 steps 
 
-// State of the open-source Floating point unit:
-// Berkeley-hardfloat: https://github.com/ucb-bar/berkeley-hardfloat
-// FPU by danshanley: https://github.com/danshanley/FPU/blob/master/fpu.v
-// CVFPU: https://github.com/openhwgroup/cvfpu
-// Sparc64-T1: https://github.com/freecores/sparc64soc/tree/master/T1-FPU
-// RocketChip: https://github.com/chipsalliance/rocket-chip/blob/master/src/main/scala/tile/FPU.scala
-// riscy-OOO: https://github.com/csail-csg/riscy-OOO/tree/master/procs/lib/Fpu.bsv
-// MicroWatt: https://github.com/antonblanchard/microwatt/blob/master/fpu.vhdl
-// VexRiscV: https://github.com/SpinalHDL/VexRiscv/tree/master/src/main/scala/vexriscv/ip/fpu
-// Neorv32: https://github.com/stnolting/neorv32/blob/main/rtl/core/neorv32_cpu_cp_fpu.vhd
+// TODO benchmark the two stage shift used in picorv32: https://github.com/YosysHQ/picorv32/blob/master/picorv32.v#L1824-L1847
 
 module fpu_adder_vanilla #(
     parameter integer p_max_shift = 55; // >= 55, limit the maximum significand shift
