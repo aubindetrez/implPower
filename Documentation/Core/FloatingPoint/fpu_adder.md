@@ -28,11 +28,38 @@ TODO
 ### Berkeley hardfloat
 Link to their project: https://github.com/ucb-bar/berkeley-hardfloat
 
-### Small FPU by Danshanley
+### Simple FPU by Danshanley
 https://github.com/danshanley/FPU/blob/master/fpu.v
 
 Notes:
+- Takes 2 single precision (32-bit) inputs `a` and `b`
+- Returns a single precision `out`
+- simple Behavioral modelisation
+- No rounding mode (How is it IEEE 754 compliant?)
 - Do not follow industry pratice: "Use non-blocking assignments for all sequential logic"
+- Do not follow our coding style: Tend to put everything in big `always @*` blocks
+- Do not follow our coding style: Reassign signal (see [o_mantissa](https://github.com/danshanley/FPU/blob/aff7125b605ad4c7d933af983c105fc6a9c4f5b9/fpu.v#L250))
+- Provide a `show_rtl.ys` to run yosys on the design
+
+Data path is as follow:
+- check if `a` / `b` are normalized and set the mantissa (significant) accordingly
+- if `a_exponent = b_exponent`:
+    - Compute addition/substraction, results in `o_mantissa` and `o_sign` 
+- else:
+    - do operand swapping (identify which operand has the biggest exponent)
+    - shift the small mantissa by the exponent difference
+    - perform addition/subtraction on the mantissa
+- Normalize: if mantissa's MSB is `1'b1` (overflow): shift mantissa and increment exponent 
+- Normalize: else: use the `addition_normalizer` module (big priority encoder which tests for how many leading
+zeros are in the mantissa and shift the mantissa/increment the exponent by the same amount)
+
+Notes about the verification:
+- a `testgen.py` python script is provided
+- It uses numpy `np.float32` as a reference
+- It generates a very simple `fpu_tb.v` verilog testbench
+- Checks if the difference between the decimal representation of the output and the expected output
+is bigger than 2.
+- Do not close the file at the end of the script
 
 ### CVFPU
 https://github.com/openhwgroup/cvfpu
