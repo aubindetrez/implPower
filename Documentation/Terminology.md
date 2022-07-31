@@ -94,6 +94,7 @@
 - Logic Level (LL) Timing Estimation like described by P.-M. Seidel and G.Even in "How many logic
   levels does floating-point addition require?"
 - Floating Point Unit (FPU)
+- Fused Multiply-Add (FMA)
 
 # Notation
 I am using the same notation at the PowerISA.
